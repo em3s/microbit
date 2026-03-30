@@ -88,52 +88,59 @@ export function EntryPage() {
       <h2>micro:bit Games</h2>
       <div ref={btnRef} />
 
-      {/* 시트 설정 */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span
-            style={{ fontSize: 12, color: sheetSaved ? '#4aff9e' : '#ff4a6a', cursor: 'pointer' }}
-            onClick={() => setShowSheetEdit(v => !v)}
-          >
-            {sheetSaved ? '● 점수 기록 연결됨' : '○ 점수 기록 미연결'}
-            <span style={{ color: '#555', marginLeft: 4 }}>{showSheetEdit ? '▲' : '▼'}</span>
-          </span>
-          {sheetSaved && (
-            <button
-              onClick={copyUrl}
-              style={{
-                padding: '2px 10px', fontSize: 11, borderRadius: 4,
-                border: '1px solid #4a9eff', background: 'transparent',
-                color: copied ? '#4aff9e' : '#4a9eff', cursor: 'pointer',
-              }}
-            >
-              {copied ? '복사됨 ✓' : 'URL 복사'}
-            </button>
-          )}
-        </div>
-        {showSheetEdit && (
+      {/* 선생님 설정 */}
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginTop: 24,
+        background: '#2a2a4a', borderRadius: 12, padding: '16px 24px', maxWidth: 400, width: '100%',
+      }}>
+        <h4 style={{ margin: 0, color: '#aaa', fontSize: 13 }}>선생님 설정</h4>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
           <div style={{ display: 'flex', gap: 6 }}>
             <input
               value={sheetInput}
               onChange={e => setSheetInput(e.target.value)}
               placeholder="Apps Script 배포 ID 또는 URL"
               style={{
-                padding: '4px 10px', fontSize: 11, borderRadius: 6,
-                border: '1px solid #444', background: '#2a2a4a', color: '#ccc',
-                width: 300,
+                padding: '6px 10px', fontSize: 12, borderRadius: 6,
+                border: '1px solid #444', background: '#1a1a2e', color: '#ccc',
+                flex: 1,
               }}
             />
             <button
               onClick={handleSaveSheet}
               style={{
-                padding: '4px 14px', fontSize: 11, borderRadius: 6,
-                border: 'none', background: '#3a3a5a', color: '#aaa', cursor: 'pointer',
+                padding: '6px 14px', fontSize: 12, borderRadius: 6,
+                border: 'none', background: sheetSaved ? '#4aff9e' : '#4a9eff',
+                color: '#1a1a2e', cursor: 'pointer', fontWeight: 'bold',
+                whiteSpace: 'nowrap',
               }}
             >
-              저장
+              {sheetSaved ? '연결됨 ✓' : '연결'}
             </button>
           </div>
-        )}
+
+          {sheetSaved && (
+            <button
+              onClick={copyUrl}
+              style={{
+                padding: '6px 14px', fontSize: 12, borderRadius: 6,
+                border: '1px solid #4a9eff', background: 'transparent',
+                color: copied ? '#4aff9e' : '#4a9eff', cursor: 'pointer',
+                width: '100%',
+              }}
+            >
+              {copied ? '복사됨 ✓' : 'URL 복사 — 학생에게 이 링크를 공유하세요'}
+            </button>
+          )}
+        </div>
+
+        <ol style={{ margin: 0, paddingLeft: 20, fontSize: 11, color: '#666', lineHeight: 2 }}>
+          <li>Google Sheets 생성 → 확장 프로그램 → Apps Script</li>
+          <li>Code.gs 붙여넣기 → 배포 → 웹 앱 (실행: 나, 액세스: 모든 사용자)</li>
+          <li>배포 URL을 위 입력란에 붙여넣기 → 연결</li>
+          <li>URL 복사 → 학생에게 공유</li>
+        </ol>
       </div>
     </div>
   );

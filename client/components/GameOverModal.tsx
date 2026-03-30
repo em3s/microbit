@@ -44,6 +44,7 @@ export function GameOverModal({ score, gameId, playerName, onRestart }: Props) {
       }}>
         다시 시작
       </button>
+      <p style={{ color: '#666', fontSize: 12 }}>space</p>
     </div>
   );
 }

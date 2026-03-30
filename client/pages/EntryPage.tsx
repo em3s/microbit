@@ -10,7 +10,7 @@ export function EntryPage() {
     const trimmed = name.trim();
     if (!trimmed) return;
     localStorage.setItem('playerName', trimmed);
-    navigate('/play');
+    navigate('/lobby');
   };
 
   return (

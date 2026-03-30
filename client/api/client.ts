@@ -1,14 +1,32 @@
-function getSheetsUrl(): string {
-  // 1. URL 파라미터에서 읽기
+const SHEETS_BASE = 'https://script.google.com/macros/s/';
+const SHEETS_SUFFIX = '/exec';
+
+/** ID만 추출하여 저장. full URL이든 ID만이든 받음 */
+function parseSheetId(input: string): string {
+  const trimmed = input.trim();
+  // full URL: https://script.google.com/macros/s/AKfyc.../exec
+  const match = trimmed.match(/\/macros\/s\/([^/]+)/);
+  if (match) return match[1];
+  // ID만 들어온 경우 (AKfyc...)
+  if (trimmed.startsWith('AKfyc')) return trimmed;
+  return '';
+}
+
+function getSheetId(): string {
   const params = new URLSearchParams(window.location.search);
   const fromUrl = params.get('sheet');
   if (fromUrl) {
-    localStorage.setItem('sheetsUrl', fromUrl);
-    return fromUrl;
+    const id = parseSheetId(fromUrl);
+    if (id) localStorage.setItem('sheetId', id);
+    return id;
   }
+  return localStorage.getItem('sheetId') || '';
+}
 
-  // 2. localStorage에서 읽기
-  return localStorage.getItem('sheetsUrl') || '';
+function getSheetsUrl(): string {
+  const id = getSheetId();
+  if (!id) return '';
+  return SHEETS_BASE + id + SHEETS_SUFFIX;
 }
 
 export function submitScore(playerName: string, gameId: string, score: number, input: string) {
@@ -29,5 +47,5 @@ export function submitScore(playerName: string, gameId: string, score: number, i
 }
 
 export function hasSheetsUrl(): boolean {
-  return getSheetsUrl() !== '';
+  return getSheetId() !== '';
 }

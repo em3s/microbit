@@ -1,6 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { hasSheetsUrl } from '../api/client';
 
 const GOOGLE_CLIENT_ID = '875819178193-7e81gvdi8j6dpr9ltv3u1r0b4ea16i8a.apps.googleusercontent.com';
 
@@ -23,7 +22,6 @@ function decodeJwt(token: string): GoogleJwtPayload {
 
 export function EntryPage() {
   const navigate = useNavigate();
-  const hasSheet = hasSheetsUrl();
   const btnRef = useRef<HTMLDivElement>(null);
 
   const handleLogin = useCallback((response: GoogleCredentialResponse) => {
@@ -69,11 +67,6 @@ export function EntryPage() {
       <h1 style={{ fontSize: 48 }}>🎮</h1>
       <h2>micro:bit Games</h2>
       <div ref={btnRef} />
-      <p style={{ fontSize: 13, color: hasSheet ? '#4aff9e' : '#ff4a6a', maxWidth: 360, textAlign: 'center', lineHeight: 1.6 }}>
-        {hasSheet
-          ? '점수가 Google Sheets에 기록됩니다.'
-          : '시트가 연결되지 않았습니다. 점수가 저장되지 않습니다.'}
-      </p>
     </div>
   );
 }

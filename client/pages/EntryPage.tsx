@@ -26,8 +26,9 @@ export function EntryPage() {
   const btnRef = useRef<HTMLDivElement>(null);
   const [sheetInput, setSheetInput] = useState(() => getSheetId());
   const [sheetSaved, setSheetSaved] = useState(hasSheetsUrl());
-  const [showSheetEdit, setShowSheetEdit] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [showCode, setShowCode] = useState(false);
 
   const handleLogin = useCallback((response: GoogleCredentialResponse) => {
     const payload = decodeJwt(response.credential);
@@ -79,6 +80,51 @@ export function EntryPage() {
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const APPS_SCRIPT_CODE = `function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var sheet = getOrCreateSheet();
+    sheet.appendRow([
+      data.playerName || '',
+      data.email || '',
+      data.gameId || '',
+      data.score || 0,
+      data.input || '',
+      data.version || '',
+      data.createdAt || new Date().toISOString()
+    ]);
+    return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ error: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({ status: 'ok' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getOrCreateSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('scores');
+  if (!sheet) {
+    sheet = ss.insertSheet('scores');
+    sheet.appendRow(['playerName', 'email', 'gameId', 'score', 'input', 'version', 'createdAt']);
+    sheet.getRange('1:1').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}`;
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(APPS_SCRIPT_CODE).then(() => {
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
     });
   };
 
@@ -135,12 +181,44 @@ export function EntryPage() {
           )}
         </div>
 
-        <ol style={{ margin: 0, paddingLeft: 20, fontSize: 11, color: '#666', lineHeight: 2 }}>
-          <li>Google Sheets 생성 → 확장 프로그램 → Apps Script</li>
-          <li>Code.gs 붙여넣기 → 배포 → 웹 앱 (실행: 나, 액세스: 모든 사용자)</li>
+        <ol style={{ margin: 0, paddingLeft: 20, fontSize: 11, color: '#666', lineHeight: 2, textAlign: 'left', width: '100%' }}>
+          <li><a href="https://sheets.google.com" target="_blank" rel="noreferrer" style={{ color: '#4a9eff' }}>Google Sheets</a> 새로 만들기</li>
+          <li>확장 프로그램 → Apps Script → 아래 코드 붙여넣기</li>
+          <li>배포 → 새 배포 → 웹 앱 (실행: <b style={{ color: '#ccc' }}>나</b>, 액세스: <b style={{ color: '#ccc' }}>모든 사용자</b>)</li>
           <li>배포 URL을 위 입력란에 붙여넣기 → 연결</li>
           <li>URL 복사 → 학생에게 공유</li>
         </ol>
+
+        {/* Code.gs */}
+        <div style={{ width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <span
+              style={{ fontSize: 11, color: '#888', cursor: 'pointer' }}
+              onClick={() => setShowCode(v => !v)}
+            >
+              Apps Script 코드 {showCode ? '▲' : '▼'}
+            </span>
+            <button
+              onClick={copyCode}
+              style={{
+                padding: '2px 10px', fontSize: 10, borderRadius: 4,
+                border: '1px solid #555', background: 'transparent',
+                color: codeCopied ? '#4aff9e' : '#aaa', cursor: 'pointer',
+              }}
+            >
+              {codeCopied ? '복사됨 ✓' : '코드 복사'}
+            </button>
+          </div>
+          {showCode && (
+            <pre style={{
+              margin: 0, padding: 10, fontSize: 10, lineHeight: 1.4,
+              background: '#1a1a2e', borderRadius: 6, color: '#aaa',
+              overflow: 'auto', maxHeight: 200,
+            }}>
+              {APPS_SCRIPT_CODE}
+            </pre>
+          )}
+        </div>
       </div>
     </div>
   );

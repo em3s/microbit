@@ -26,6 +26,8 @@ function getSheetsUrl(): string {
   return SHEETS_BASE + id + SHEETS_SUFFIX;
 }
 
+const APP_VERSION = '0.2.0';
+
 export function submitScore(playerName: string, email: string, gameId: string, score: number, input: string) {
   const url = getSheetsUrl();
   if (!url) return;
@@ -38,6 +40,7 @@ export function submitScore(playerName: string, email: string, gameId: string, s
       gameId,
       score: Math.floor(score),
       input,
+      version: APP_VERSION,
       createdAt: new Date().toISOString(),
     }),
     mode: 'no-cors',

@@ -2,7 +2,7 @@
  * micro:bit Games - Google Sheets 점수 기록
  *
  * 시트 구조 (자동 생성):
- * playerName | email | gameId | score | input | createdAt
+ * playerName | email | gameId | score | input | version | createdAt
  */
 
 function doPost(e) {
@@ -16,6 +16,7 @@ function doPost(e) {
       data.gameId || '',
       data.score || 0,
       data.input || '',
+      data.version || '',
       data.createdAt || new Date().toISOString()
     ]);
 
@@ -41,7 +42,7 @@ function getOrCreateSheet() {
 
   if (!sheet) {
     sheet = ss.insertSheet('scores');
-    sheet.appendRow(['playerName', 'email', 'gameId', 'score', 'input', 'createdAt']);
+    sheet.appendRow(['playerName', 'email', 'gameId', 'score', 'input', 'version', 'createdAt']);
     sheet.getRange('1:1').setFontWeight('bold');
     sheet.setFrozenRows(1);
   }

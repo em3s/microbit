@@ -11,19 +11,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script>
-      // GitHub Pages SPA: 404.html에서 리다이렉트된 route 복원
-      (function() {
-        var params = new URLSearchParams(window.location.search);
-        var route = params.get('route');
-        if (route) {
-          params.delete('route');
-          var remaining = params.toString();
-          var url = route + (remaining ? '?' + remaining : '') + window.location.hash;
-          history.replaceState(null, '', url);
-        }
-      })();
-    </script>
     <script type="module" src="/main.tsx"></script>
   </body>
 </html>

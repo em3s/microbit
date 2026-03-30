@@ -23,6 +23,17 @@ export function LobbyPage() {
   const [sheetInput, setSheetInput] = useState(() => getSheetIdPublic());
   const [sheetSaved, setSheetSaved] = useState(hasSheetsUrl());
   const [showSheetEdit, setShowSheetEdit] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copyStudentUrl = () => {
+    const id = getSheetIdPublic();
+    const base = window.location.origin + window.location.pathname;
+    const url = id ? `${base}?sheet=${id}` : base;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   useEffect(() => {
     if (!playerName) navigate('/');
@@ -161,6 +172,18 @@ export function LobbyPage() {
           {sheetSaved ? '● 점수 기록 연결됨' : '○ 점수 기록 미연결'}
           <span style={{ color: '#555', marginLeft: 6 }}>{showSheetEdit ? '▲' : '▼'}</span>
         </span>
+        {sheetSaved && (
+          <button
+            onClick={copyStudentUrl}
+            style={{
+              padding: '4px 14px', fontSize: 11, borderRadius: 6,
+              border: '1px solid #4a9eff', background: 'transparent',
+              color: copied ? '#4aff9e' : '#4a9eff', cursor: 'pointer',
+            }}
+          >
+            {copied ? '복사됨 ✓' : '학생용 URL 복사'}
+          </button>
+        )}
         {showSheetEdit && (
           <div style={{ display: 'flex', gap: 6 }}>
             <input

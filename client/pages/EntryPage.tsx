@@ -1,6 +1,6 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { submitScore } from '../api/client';
+import { submitScore, hasSheetsUrl, getSheetId, setSheetId } from '../api/client';
 
 const GOOGLE_CLIENT_ID = '875819178193-7e81gvdi8j6dpr9ltv3u1r0b4ea16i8a.apps.googleusercontent.com';
 
@@ -24,6 +24,10 @@ function decodeJwt(token: string): GoogleJwtPayload {
 export function EntryPage() {
   const navigate = useNavigate();
   const btnRef = useRef<HTMLDivElement>(null);
+  const [sheetInput, setSheetInput] = useState(() => getSheetId());
+  const [sheetSaved, setSheetSaved] = useState(hasSheetsUrl());
+  const [showSheetEdit, setShowSheetEdit] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleLogin = useCallback((response: GoogleCredentialResponse) => {
     const payload = decodeJwt(response.credential);
@@ -35,7 +39,6 @@ export function EntryPage() {
   }, [navigate]);
 
   useEffect(() => {
-    // 이미 로그인되어 있으면 바로 로비로
     if (localStorage.getItem('playerEmail')) {
       navigate('/lobby');
       return;
@@ -64,11 +67,74 @@ export function EntryPage() {
     initGoogle();
   }, [handleLogin, navigate]);
 
+  const handleSaveSheet = () => {
+    setSheetId(sheetInput);
+    setSheetSaved(hasSheetsUrl());
+  };
+
+  const copyUrl = () => {
+    const id = getSheetId();
+    const base = window.location.origin + window.location.pathname;
+    const url = id ? `${base}?sheet=${id}` : base;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: 24 }}>
       <h1 style={{ fontSize: 48 }}>🎮</h1>
       <h2>micro:bit Games</h2>
       <div ref={btnRef} />
+
+      {/* 시트 설정 */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span
+            style={{ fontSize: 12, color: sheetSaved ? '#4aff9e' : '#ff4a6a', cursor: 'pointer' }}
+            onClick={() => setShowSheetEdit(v => !v)}
+          >
+            {sheetSaved ? '● 점수 기록 연결됨' : '○ 점수 기록 미연결'}
+            <span style={{ color: '#555', marginLeft: 4 }}>{showSheetEdit ? '▲' : '▼'}</span>
+          </span>
+          {sheetSaved && (
+            <button
+              onClick={copyUrl}
+              style={{
+                padding: '2px 10px', fontSize: 11, borderRadius: 4,
+                border: '1px solid #4a9eff', background: 'transparent',
+                color: copied ? '#4aff9e' : '#4a9eff', cursor: 'pointer',
+              }}
+            >
+              {copied ? '복사됨 ✓' : 'URL 복사'}
+            </button>
+          )}
+        </div>
+        {showSheetEdit && (
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input
+              value={sheetInput}
+              onChange={e => setSheetInput(e.target.value)}
+              placeholder="Apps Script 배포 ID 또는 URL"
+              style={{
+                padding: '4px 10px', fontSize: 11, borderRadius: 6,
+                border: '1px solid #444', background: '#2a2a4a', color: '#ccc',
+                width: 300,
+              }}
+            />
+            <button
+              onClick={handleSaveSheet}
+              style={{
+                padding: '4px 14px', fontSize: 11, borderRadius: 6,
+                border: 'none', background: '#3a3a5a', color: '#aaa', cursor: 'pointer',
+              }}
+            >
+              저장
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { GAME_REGISTRY } from '../games/GameRegistry';
 import { useSerial } from '../hooks/useSerial';
 import { WebSerialManager } from '../serial/WebSerialManager';
-import { hasSheetsUrl, getSheetIdPublic, setSheetId } from '../api/client';
 
 const GAME_DESCRIPTIONS: Record<string, string> = {
   runner: '장애물을 피해 최대한 오래 달리세요',
@@ -20,20 +19,6 @@ export function LobbyPage() {
 
   const [gameId, setGameId] = useState(() => Object.keys(GAME_REGISTRY)[0] || 'dodge');
   const [inputMode, setInputMode] = useState<'microbit' | 'keyboard'>('microbit');
-  const [sheetInput, setSheetInput] = useState(() => getSheetIdPublic());
-  const [sheetSaved, setSheetSaved] = useState(hasSheetsUrl());
-  const [showSheetEdit, setShowSheetEdit] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const copyStudentUrl = () => {
-    const id = getSheetIdPublic();
-    const base = window.location.origin + window.location.pathname;
-    const url = id ? `${base}?sheet=${id}` : base;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
 
   useEffect(() => {
     if (!playerName) navigate('/');
@@ -162,55 +147,6 @@ export function LobbyPage() {
       >
         게임 시작
       </button>
-
-      {/* 시트 설정 (하단, 작게) */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginTop: 8, opacity: 0.7 }}>
-        <span
-          style={{ fontSize: 11, color: sheetSaved ? '#4aff9e' : '#ff4a6a', cursor: 'pointer' }}
-          onClick={() => setShowSheetEdit(v => !v)}
-        >
-          {sheetSaved ? '● 점수 기록 연결됨' : '○ 점수 기록 미연결'}
-          <span style={{ color: '#555', marginLeft: 6 }}>{showSheetEdit ? '▲' : '▼'}</span>
-        </span>
-        {sheetSaved && (
-          <button
-            onClick={copyStudentUrl}
-            style={{
-              padding: '4px 14px', fontSize: 11, borderRadius: 6,
-              border: '1px solid #4a9eff', background: 'transparent',
-              color: copied ? '#4aff9e' : '#4a9eff', cursor: 'pointer',
-            }}
-          >
-            {copied ? '복사됨 ✓' : 'URL 복사'}
-          </button>
-        )}
-        {showSheetEdit && (
-          <div style={{ display: 'flex', gap: 6 }}>
-            <input
-              value={sheetInput}
-              onChange={e => setSheetInput(e.target.value)}
-              placeholder="Apps Script ID 또는 URL"
-              style={{
-                padding: '4px 10px', fontSize: 11, borderRadius: 6,
-                border: '1px solid #444', background: '#2a2a4a', color: '#ccc',
-                width: 280,
-              }}
-            />
-            <button
-              onClick={() => {
-                setSheetId(sheetInput);
-                setSheetSaved(hasSheetsUrl());
-              }}
-              style={{
-                padding: '4px 14px', fontSize: 11, borderRadius: 6,
-                border: 'none', background: '#3a3a5a', color: '#aaa', cursor: 'pointer',
-              }}
-            >
-              저장
-            </button>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

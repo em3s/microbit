@@ -1,5 +1,6 @@
 const SHEETS_BASE = 'https://script.google.com/macros/s/';
 const SHEETS_SUFFIX = '/exec';
+const APP_VERSION = '0.2.0';
 
 function parseSheetId(input: string): string {
   const trimmed = input.trim();
@@ -9,15 +10,35 @@ function parseSheetId(input: string): string {
   return '';
 }
 
-function getSheetId(): string {
+// 최초 진입 시 URL 파라미터 → localStorage 저장 (한번만)
+let urlChecked = false;
+function checkUrlOnce() {
+  if (urlChecked) return;
+  urlChecked = true;
   const params = new URLSearchParams(window.location.search);
   const fromUrl = params.get('sheet');
   if (fromUrl) {
     const id = parseSheetId(fromUrl);
     if (id) localStorage.setItem('sheetId', id);
-    return id;
   }
+}
+checkUrlOnce();
+
+export function getSheetId(): string {
   return localStorage.getItem('sheetId') || '';
+}
+
+export function setSheetId(id: string): void {
+  const parsed = parseSheetId(id);
+  if (parsed) {
+    localStorage.setItem('sheetId', parsed);
+  } else {
+    localStorage.removeItem('sheetId');
+  }
+}
+
+export function hasSheetsUrl(): boolean {
+  return getSheetId() !== '';
 }
 
 function getSheetsUrl(): string {
@@ -25,8 +46,6 @@ function getSheetsUrl(): string {
   if (!id) return '';
   return SHEETS_BASE + id + SHEETS_SUFFIX;
 }
-
-const APP_VERSION = '0.2.0';
 
 export function submitScore(playerName: string, email: string, gameId: string, score: number, input: string) {
   const url = getSheetsUrl();
@@ -45,21 +64,4 @@ export function submitScore(playerName: string, email: string, gameId: string, s
     }),
     mode: 'no-cors',
   }).catch(() => {});
-}
-
-export function hasSheetsUrl(): boolean {
-  return getSheetId() !== '';
-}
-
-export function getSheetIdPublic(): string {
-  return getSheetId();
-}
-
-export function setSheetId(id: string): void {
-  const parsed = parseSheetId(id);
-  if (parsed) {
-    localStorage.setItem('sheetId', parsed);
-  } else {
-    localStorage.removeItem('sheetId');
-  }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { submitScore } from '../api/client';
 
 const GOOGLE_CLIENT_ID = '875819178193-7e81gvdi8j6dpr9ltv3u1r0b4ea16i8a.apps.googleusercontent.com';
 
@@ -29,6 +30,7 @@ export function EntryPage() {
     localStorage.setItem('playerName', payload.name);
     localStorage.setItem('playerEmail', payload.email);
     localStorage.setItem('playerPicture', payload.picture || '');
+    submitScore(payload.name, payload.email, 'login', 0, 'login');
     navigate('/lobby');
   }, [navigate]);
 

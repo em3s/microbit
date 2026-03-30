@@ -1,13 +1,10 @@
 const SHEETS_BASE = 'https://script.google.com/macros/s/';
 const SHEETS_SUFFIX = '/exec';
 
-/** ID만 추출하여 저장. full URL이든 ID만이든 받음 */
 function parseSheetId(input: string): string {
   const trimmed = input.trim();
-  // full URL: https://script.google.com/macros/s/AKfyc.../exec
   const match = trimmed.match(/\/macros\/s\/([^/]+)/);
   if (match) return match[1];
-  // ID만 들어온 경우 (AKfyc...)
   if (trimmed.startsWith('AKfyc')) return trimmed;
   return '';
 }
@@ -29,7 +26,7 @@ function getSheetsUrl(): string {
   return SHEETS_BASE + id + SHEETS_SUFFIX;
 }
 
-export function submitScore(playerName: string, gameId: string, score: number, input: string) {
+export function submitScore(playerName: string, email: string, gameId: string, score: number, input: string) {
   const url = getSheetsUrl();
   if (!url) return;
 
@@ -37,6 +34,7 @@ export function submitScore(playerName: string, gameId: string, score: number, i
     method: 'POST',
     body: JSON.stringify({
       playerName,
+      email,
       gameId,
       score: Math.floor(score),
       input,

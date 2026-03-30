@@ -15,6 +15,7 @@ export function GamePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const playerName = localStorage.getItem('playerName');
+  const playerEmail = localStorage.getItem('playerEmail') || '';
 
   const gameId = searchParams.get('game') || Object.keys(GAME_REGISTRY)[0] || 'dodge';
   const inputMode = searchParams.get('input') || 'microbit';
@@ -32,7 +33,7 @@ export function GamePage() {
   const startGameRef = useRef<() => void>(() => {});
 
   useEffect(() => {
-    if (!playerName) navigate('/');
+    if (!playerName || !playerEmail) navigate('/');
   }, [playerName, navigate]);
 
   useEffect(() => {
@@ -152,6 +153,7 @@ export function GamePage() {
               score={finalScore}
               gameId={gameId}
               playerName={playerName}
+              email={playerEmail}
               inputMode={inputMode}
               onRestart={startGame}
             />

@@ -28,11 +28,17 @@ export function LobbyPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: 32, padding: 24 }}>
-      <div>
-        <h2 style={{ textAlign: 'center', marginBottom: 4 }}>{playerName}</h2>
-        <p style={{ color: '#888', textAlign: 'center', fontSize: 14 }}>
-          <span style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => { localStorage.removeItem('playerName'); navigate('/'); }}>
-            이름 변경
+      <div style={{ textAlign: 'center' }}>
+        <h2 style={{ marginBottom: 4 }}>{playerName}</h2>
+        <p style={{ color: '#888', fontSize: 13 }}>{localStorage.getItem('playerEmail')}</p>
+        <p style={{ color: '#888', fontSize: 14, marginTop: 4 }}>
+          <span style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => {
+            localStorage.removeItem('playerName');
+            localStorage.removeItem('playerEmail');
+            localStorage.removeItem('playerPicture');
+            navigate('/');
+          }}>
+            로그아웃
           </span>
         </p>
       </div>

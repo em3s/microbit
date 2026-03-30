@@ -5,14 +5,15 @@ interface Props {
   score: number;
   gameId: string;
   playerName: string;
+  email: string;
   inputMode: string;
   onRestart: () => void;
 }
 
-export function GameOverModal({ score, gameId, playerName, inputMode, onRestart }: Props) {
+export function GameOverModal({ score, gameId, playerName, email, inputMode, onRestart }: Props) {
   useEffect(() => {
-    submitScore(playerName, gameId, score, inputMode);
-  }, [playerName, gameId, score, inputMode]);
+    submitScore(playerName, email, gameId, score, inputMode);
+  }, [playerName, email, gameId, score, inputMode]);
 
   return (
     <div style={{

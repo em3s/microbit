@@ -4,3 +4,4 @@ dist-server/
 release/
 data/
 *.log
+.env

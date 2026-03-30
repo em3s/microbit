@@ -1,29 +1,33 @@
-const BASE = '/api';
+function getSheetsUrl(): string {
+  // 1. URL 파라미터에서 읽기
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get('sheet');
+  if (fromUrl) {
+    localStorage.setItem('sheetsUrl', fromUrl);
+    return fromUrl;
+  }
 
-async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json() as Promise<T>;
+  // 2. localStorage에서 읽기
+  return localStorage.getItem('sheetsUrl') || '';
 }
 
-export function submitScore(playerName: string, gameId: string, score: number) {
-  return fetchJSON<{ rank: number; isNewBest: boolean }>(`${BASE}/scores`, {
+export function submitScore(playerName: string, gameId: string, score: number, input: string) {
+  const url = getSheetsUrl();
+  if (!url) return;
+
+  fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ playerName, gameId, score: Math.floor(score) }),
-  });
+    body: JSON.stringify({
+      playerName,
+      gameId,
+      score: Math.floor(score),
+      input,
+      createdAt: new Date().toISOString(),
+    }),
+    mode: 'no-cors',
+  }).catch(() => {});
 }
 
-export function getLeaderboard(gameId: string, limit = 20) {
-  return fetchJSON<Array<{ playerName: string; score: number; createdAt: string }>>(
-    `${BASE}/leaderboard/${gameId}?limit=${limit}`
-  );
-}
-
-export function getAdminStatus() {
-  return fetchJSON<{ totalScores: number }>(`${BASE}/admin/status`);
-}
-
-export function resetScores(gameId: string) {
-  return fetchJSON<{ ok: boolean }>(`${BASE}/admin/scores/${gameId}`, { method: 'DELETE' });
+export function hasSheetsUrl(): boolean {
+  return getSheetsUrl() !== '';
 }

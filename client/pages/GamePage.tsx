@@ -1,10 +1,8 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSerial } from '../hooks/useSerial';
-import { useLeaderboard } from '../hooks/useLeaderboard';
 import { createGame, GAME_REGISTRY } from '../games/GameRegistry';
 import { GameOverModal } from '../components/GameOverModal';
-import { Leaderboard } from '../components/Leaderboard';
 import type { GameEngine } from '../engine/GameEngine';
 import type { InputManager } from '../engine/InputManager';
 
@@ -22,16 +20,6 @@ export function GamePage() {
   const inputMode = searchParams.get('input') || 'microbit';
   const enableKeyboard = inputMode === 'keyboard';
 
-  // 비활성 게임이면 로비로
-  useEffect(() => {
-    if (!GAME_REGISTRY[gameId]) navigate('/lobby');
-  }, [gameId, navigate]);
-
-  // 리더보드 키: 게임_입력방식
-  const scoreKeyMicrobit = `${gameId}_microbit`;
-  const scoreKeyKeyboard = `${gameId}_keyboard`;
-  const scoreKey = enableKeyboard ? scoreKeyKeyboard : scoreKeyMicrobit;
-
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { manager, connected, connect, disconnect } = useSerial();
   const engineRef = useRef<GameEngine | null>(null);
@@ -43,13 +31,13 @@ export function GamePage() {
   const gameOverRef = useRef(false);
   const startGameRef = useRef<() => void>(() => {});
 
-  const { entries: lbMicrobit, refresh: refreshMicrobit } = useLeaderboard(scoreKeyMicrobit);
-  const { entries: lbKeyboard, refresh: refreshKeyboard } = useLeaderboard(scoreKeyKeyboard);
-  const refreshLeaderboard = enableKeyboard ? refreshKeyboard : refreshMicrobit;
-
   useEffect(() => {
     if (!playerName) navigate('/');
   }, [playerName, navigate]);
+
+  useEffect(() => {
+    if (!GAME_REGISTRY[gameId]) navigate('/lobby');
+  }, [gameId, navigate]);
 
   const startGame = useCallback(() => {
     if (!canvasRef.current) return;
@@ -63,7 +51,6 @@ export function GamePage() {
         setFinalScore(score);
         setGameOver(true);
         gameOverRef.current = true;
-        refreshLeaderboard();
       },
     }, enableKeyboard);
 
@@ -76,7 +63,7 @@ export function GamePage() {
       setStarted(true);
       result.engine.start();
     }
-  }, [manager, enableKeyboard, gameId, refreshLeaderboard]);
+  }, [manager, enableKeyboard, gameId]);
 
   startGameRef.current = startGame;
 
@@ -106,7 +93,7 @@ export function GamePage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '100vh', padding: 24, gap: 16 }}>
       {/* 상단 바 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', maxWidth: 1100 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', maxWidth: 800 }}>
         <h2 style={{ margin: 0 }}>{gameDef?.name}</h2>
         <span style={{ color: '#888', fontSize: 14 }}>{playerName}</span>
         <span style={{ color: '#555', fontSize: 12 }}>
@@ -124,9 +111,8 @@ export function GamePage() {
         </button>
       </div>
 
-      {/* 메인: 게임 + 사이드바 */}
-      <div style={{ display: 'flex', gap: 24, width: '100%', maxWidth: 1100, alignItems: 'flex-start' }}>
-        {/* 게임 캔버스 */}
+      {/* 게임 + 키보드 안내 */}
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <canvas
             ref={canvasRef}
@@ -164,35 +150,23 @@ export function GamePage() {
           {gameOver && playerName && (
             <GameOverModal
               score={finalScore}
-              gameId={scoreKey}
+              gameId={gameId}
               playerName={playerName}
+              inputMode={inputMode}
               onRestart={startGame}
             />
           )}
         </div>
 
-        {/* 사이드바 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 220, flex: 1 }}>
-          {/* 키보드 안내 */}
-          {enableKeyboard && KEYBOARD_HINTS[gameId] && (
-            <div style={{ background: '#2a2a4a', borderRadius: 8, padding: 16 }}>
-              <h4 style={{ marginBottom: 8, color: '#ffa04a' }}>⌨️ 키보드 조작</h4>
-              <pre style={{ margin: 0, fontSize: 14, color: '#ccc', lineHeight: 1.8 }}>
-                {KEYBOARD_HINTS[gameId]}
-              </pre>
-            </div>
-          )}
-
-          {/* micro:bit 리더보드 */}
-          <div style={{ background: '#2a2a4a', borderRadius: 8, padding: 16 }}>
-            <Leaderboard entries={lbMicrobit} title="micro:bit 리더보드" />
+        {/* 키보드 안내 (키보드 모드일 때만) */}
+        {enableKeyboard && KEYBOARD_HINTS[gameId] && (
+          <div style={{ background: '#2a2a4a', borderRadius: 8, padding: 16, minWidth: 200 }}>
+            <h4 style={{ marginBottom: 8, color: '#ffa04a' }}>⌨️ 키보드 조작</h4>
+            <pre style={{ margin: 0, fontSize: 14, color: '#ccc', lineHeight: 1.8 }}>
+              {KEYBOARD_HINTS[gameId]}
+            </pre>
           </div>
-
-          {/* 키보드 리더보드 */}
-          <div style={{ background: '#2a2a4a', borderRadius: 8, padding: 16 }}>
-            <Leaderboard entries={lbKeyboard} title="⌨️ 키보드 리더보드" />
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

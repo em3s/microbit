@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { hasSheetsUrl } from '../api/client';
 
 export function EntryPage() {
   const [name, setName] = useState(() => localStorage.getItem('playerName') ?? '');
   const navigate = useNavigate();
+  const hasSheet = hasSheetsUrl();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +35,11 @@ export function EntryPage() {
           시작
         </button>
       </form>
+      <p style={{ fontSize: 13, color: hasSheet ? '#4aff9e' : '#ff4a6a', maxWidth: 360, textAlign: 'center', lineHeight: 1.6 }}>
+        {hasSheet
+          ? '점수가 Google Sheets에 기록됩니다.'
+          : '시트가 연결되지 않았습니다. 점수가 저장되지 않습니다.'}
+      </p>
     </div>
   );
 }

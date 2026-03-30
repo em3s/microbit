@@ -47,3 +47,16 @@ export function submitScore(playerName: string, email: string, gameId: string, s
 export function hasSheetsUrl(): boolean {
   return getSheetId() !== '';
 }
+
+export function getSheetIdPublic(): string {
+  return getSheetId();
+}
+
+export function setSheetId(id: string): void {
+  const parsed = parseSheetId(id);
+  if (parsed) {
+    localStorage.setItem('sheetId', parsed);
+  } else {
+    localStorage.removeItem('sheetId');
+  }
+}

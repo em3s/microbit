@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GAME_REGISTRY } from '../games/GameRegistry';
 import { useSerial } from '../hooks/useSerial';
 import { WebSerialManager } from '../serial/WebSerialManager';
+import { hasSheetsUrl, getSheetIdPublic, setSheetId } from '../api/client';
 
 const GAME_DESCRIPTIONS: Record<string, string> = {
   runner: '장애물을 피해 최대한 오래 달리세요',
@@ -17,6 +18,8 @@ export function LobbyPage() {
 
   const [gameId, setGameId] = useState(() => Object.keys(GAME_REGISTRY)[0] || 'dodge');
   const [inputMode, setInputMode] = useState<'microbit' | 'keyboard'>('microbit');
+  const [sheetInput, setSheetInput] = useState(() => getSheetIdPublic());
+  const [sheetSaved, setSheetSaved] = useState(hasSheetsUrl());
 
   useEffect(() => {
     if (!playerName) navigate('/');
@@ -126,6 +129,37 @@ export function LobbyPage() {
       >
         게임 시작
       </button>
+
+      {/* 시트 설정 */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: 16 }}>
+        <p style={{ fontSize: 12, color: sheetSaved ? '#4aff9e' : '#ff4a6a' }}>
+          {sheetSaved ? '점수 기록: Google Sheets 연결됨' : '점수 기록: 시트 미연결'}
+        </p>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <input
+            value={sheetInput}
+            onChange={e => setSheetInput(e.target.value)}
+            placeholder="시트 ID 또는 URL"
+            style={{
+              padding: '4px 10px', fontSize: 12, borderRadius: 6,
+              border: '1px solid #444', background: '#2a2a4a', color: '#ccc',
+              width: 260,
+            }}
+          />
+          <button
+            onClick={() => {
+              setSheetId(sheetInput);
+              setSheetSaved(hasSheetsUrl());
+            }}
+            style={{
+              padding: '4px 12px', fontSize: 12, borderRadius: 6,
+              border: 'none', background: '#3a3a5a', color: '#aaa', cursor: 'pointer',
+            }}
+          >
+            저장
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

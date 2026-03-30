@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>micro:bit Games</title>
+    <script>
+      // GitHub Pages SPA redirect
+      // /microbit/play?game=dodge → /microbit/?route=/play&game=dodge
+      var path = window.location.pathname;
+      var query = window.location.search;
+      var hash = window.location.hash;
+      var base = '/microbit/';
+      if (path !== base && path !== base + 'index.html') {
+        var route = path.replace(base, '/');
+        var sep = query ? '&' : '?';
+        window.location.replace(base + '?route=' + encodeURIComponent(route) + (query ? sep + query.slice(1) : '') + hash);
+      }
+    </script>
+  </head>
+  <body></body>
+</html>

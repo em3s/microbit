@@ -181,7 +181,7 @@ export function LobbyPage() {
               color: copied ? '#4aff9e' : '#4a9eff', cursor: 'pointer',
             }}
           >
-            {copied ? '복사됨 ✓' : '학생용 URL 복사'}
+            {copied ? '복사됨 ✓' : 'URL 복사'}
           </button>
         )}
         {showSheetEdit && (

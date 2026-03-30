@@ -5,7 +5,7 @@ export function adminRouter(): Router {
   const router = Router();
 
   router.get('/status', (_req, res) => {
-    res.json({ activeGame: 'runner', totalScores: totalCount() });
+    res.json({ totalScores: totalCount() });
   });
 
   router.delete('/scores/:gameId', (req, res) => {

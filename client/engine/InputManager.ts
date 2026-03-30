@@ -26,6 +26,8 @@ export class InputManager {
   private analogBaseValues = new Map<string, number>(); // 원본 값 보관
   sensitivity = 1.0;
   private enableKeyboard: boolean;
+  private serial: WebSerialManager | null = null;
+  private serialHandler: ((cmd: string) => void) | null = null;
 
   constructor(
     serial: WebSerialManager | null,
@@ -60,7 +62,8 @@ export class InputManager {
     }
 
     // 시리얼 명령어 수신
-    serial?.on('command', (cmd: string) => {
+    this.serial = serial;
+    this.serialHandler = (cmd: string) => {
       // 연속 값: "x:123" 형태
       const colonIdx = cmd.indexOf(':');
       if (colonIdx !== -1) {
@@ -75,7 +78,8 @@ export class InputManager {
       if (cmd in this.configs) {
         this.firedQueue.push(cmd);
       }
-    });
+    };
+    serial?.on('command', this.serialHandler);
   }
 
   private onKeyDown = (e: KeyboardEvent): void => {
@@ -162,5 +166,9 @@ export class InputManager {
   destroy(): void {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
+    if (this.serialHandler) {
+      this.serial?.off('command', this.serialHandler);
+      this.serialHandler = null;
+    }
   }
 }

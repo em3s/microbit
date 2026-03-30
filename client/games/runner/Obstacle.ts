@@ -62,7 +62,7 @@ export class Obstacle extends Entity {
       return;
     }
 
-    ctx.fillStyle = this.type === 'tall' ? '#ff4a6a' : '#ff4a6a';
+    ctx.fillStyle = this.type === 'tall' ? '#ff4a6a' : '#ff8a4a';
     ctx.fillRect(this.x, this.y, this.width, this.height);
 
     if (this.type === 'combo') {

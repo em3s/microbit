@@ -24,8 +24,14 @@ export class InputManager {
   private analogValues = new Map<string, number>();
   private keyToAnalog = new Map<string, { name: string; value: number }>();
   private analogBaseValues = new Map<string, number>(); // 원본 값 보관
-  sensitivity = 1.0;
+  private _sensitivity = 1.0;
   private enableKeyboard: boolean;
+
+  get sensitivity() { return this._sensitivity; }
+  set sensitivity(val: number) {
+    this._sensitivity = val;
+    this.updateAnalogSensitivity();
+  }
   private serial: WebSerialManager | null = null;
   private serialHandler: ((cmd: string) => void) | null = null;
 
@@ -88,12 +94,10 @@ export class InputManager {
     // 민감도 조절 (↑/↓)
     if (key === 'arrowup') {
       this.sensitivity = Math.min(this.sensitivity + 0.5, 20.0);
-      this.updateAnalogSensitivity();
       return;
     }
     if (key === 'arrowdown') {
       this.sensitivity = Math.max(this.sensitivity - 0.5, 0.5);
-      this.updateAnalogSensitivity();
       return;
     }
 

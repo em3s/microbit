@@ -48,7 +48,11 @@ export class WebSerialManager {
     } catch (err) {
       console.error('[Serial] connect failed:', err);
       this.port = null;
-      this.emit('error', err instanceof Error ? err : new Error(String(err)));
+      const error = err instanceof Error ? err : new Error(String(err));
+      if (error.message.includes('Failed to open serial port')) {
+        alert('micro:bit 연결 실패!\n\n다른 탭이나 프로그램에서 이미 연결 중일 수 있습니다.\n다른 탭을 닫고 다시 시도해주세요.');
+      }
+      this.emit('error', error);
     }
   }
 

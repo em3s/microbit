@@ -41,9 +41,12 @@ export class WebSerialManager {
       this.port = await navigator.serial.requestPort({
         filters: [{ usbVendorId: 0x0d28 }], // micro:bit
       });
+      console.log('[Serial] port selected, opening...');
       await this.openPort(baudRate);
+      console.log('[Serial] connected successfully');
       this.autoReconnect = true;
     } catch (err) {
+      console.error('[Serial] connect failed:', err);
       this.port = null;
       this.emit('error', err instanceof Error ? err : new Error(String(err)));
     }

@@ -24,8 +24,10 @@ function checkUrlOnce() {
 }
 checkUrlOnce();
 
+const DEFAULT_SHEET_ID = 'AKfycbyjjLA5EUaUpPB29W0Qz36cv3xfVPdsAybwQSFX12vGaCW8_w2RgebHtMn3jN2Gp5w9cQ';
+
 export function getSheetId(): string {
-  return localStorage.getItem('sheetId') || '';
+  return localStorage.getItem('sheetId') || DEFAULT_SHEET_ID;
 }
 
 export function setSheetId(id: string): void {

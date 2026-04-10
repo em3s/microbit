@@ -98,8 +98,20 @@ export class HanoiGame extends GameEngine {
 
   // ── 드래그 & 드롭 ──
 
+  private readonly RESTART_BTN = { x: C.CANVAS_WIDTH / 2 - 60, y: C.CANVAS_HEIGHT / 2 + 44, w: 120, h: 36 };
+
   private onMouseDown = (e: MouseEvent): void => {
-    if (this.won || this.drag || this.dropAnim) return;
+    if (this.won) {
+      const pos = this.toCanvas(e);
+      const b = this.RESTART_BTN;
+      if (pos.x >= b.x && pos.x <= b.x + b.w && pos.y >= b.y && pos.y <= b.y + b.h) {
+        this.init();
+        this.score = 0;
+        this.elapsed = 0;
+      }
+      return;
+    }
+    if (this.drag || this.dropAnim) return;
 
     const pos = this.toCanvas(e);
     const pegIdx = this.getPegAt(pos.x);
@@ -214,7 +226,7 @@ export class HanoiGame extends GameEngine {
     const cy = C.CANVAS_HEIGHT / 2;
 
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(0, cy - 50, W, 100);
+    ctx.fillRect(0, cy - 50, W, 140);
 
     ctx.fillStyle = '#4aff9e';
     ctx.font = 'bold 28px monospace';
@@ -223,7 +235,17 @@ export class HanoiGame extends GameEngine {
 
     ctx.fillStyle = '#ccc';
     ctx.font = '16px monospace';
-    ctx.fillText(`최적 ${this.optimalMoves}회 / 내 이동 ${this.moves}회`, W / 2, cy + 28);
+    ctx.fillText(`최적 ${this.optimalMoves}회 / 내 이동 ${this.moves}회`, W / 2, cy + 22);
+
+    // 다시 시작 버튼
+    const b = this.RESTART_BTN;
+    ctx.fillStyle = '#4a9eff';
+    ctx.beginPath();
+    ctx.roundRect(b.x, b.y, b.w, b.h, 6);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px monospace';
+    ctx.fillText('다시 시작', W / 2, b.y + b.h / 2 + 5);
   }
 
   private renderHint(ctx: CanvasRenderingContext2D): void {

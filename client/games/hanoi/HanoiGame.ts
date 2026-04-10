@@ -204,10 +204,8 @@ export class HanoiGame extends GameEngine {
   }
 
   private calculateScore(): number {
-    // 최적 이동 대비 점수 + 시간 보너스
     const efficiency = this.optimalMoves / Math.max(this.moves, 1);
-    const timeBonus = Math.max(0, 300 - this.elapsed * 2);
-    return Math.floor(efficiency * 700 + timeBonus + this.level * 100);
+    return Math.floor(efficiency * 700 + this.level * 100);
   }
 
   protected render(ctx: CanvasRenderingContext2D): void {
@@ -272,19 +270,6 @@ export class HanoiGame extends GameEngine {
     ctx.font = '14px monospace';
     ctx.fillText(`최적: ${this.optimalMoves}`, 16, 54);
 
-    // 난이도 표시
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#4a9eff';
-    ctx.font = 'bold 14px monospace';
-    ctx.fillText(`LV ${this.level} (디스크 ${this.level}개)`, W - 16, 32);
-
-    // 시간
-    ctx.fillStyle = '#666';
-    ctx.font = '14px monospace';
-    const mins = Math.floor(this.elapsed / 60);
-    const secs = Math.floor(this.elapsed % 60);
-    ctx.fillText(`${mins}:${secs.toString().padStart(2, '0')}`, W - 16, 54);
-
     // 승리 메시지
     if (this.won) {
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -297,7 +282,7 @@ export class HanoiGame extends GameEngine {
 
       ctx.fillStyle = '#eee';
       ctx.font = '18px monospace';
-      ctx.fillText(`${this.moves}회 이동 | SCORE: ${Math.floor(this.score)}`, W / 2, H / 2 + 30);
+      ctx.fillText(`${this.moves}회 이동 (최적 ${this.optimalMoves}회)`, W / 2, H / 2 + 30);
     }
 
     // 선택 안내 (하단)

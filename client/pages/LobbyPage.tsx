@@ -20,8 +20,6 @@ export function LobbyPage() {
 
   const [gameId, setGameId] = useState(() => Object.keys(GAME_REGISTRY)[0] || 'dodge');
   const [inputMode, setInputMode] = useState<'microbit' | 'keyboard'>('microbit');
-  const [hanoiLevel, setHanoiLevel] = useState(3);
-
   useEffect(() => {
     if (!playerName) navigate('/');
   }, [playerName, navigate]);
@@ -29,7 +27,6 @@ export function LobbyPage() {
   const handleStart = () => {
     const input = gameId === 'hanoi' ? 'mouse' : inputMode;
     const params = new URLSearchParams({ game: gameId, input });
-    if (gameId === 'hanoi') params.set('level', String(hanoiLevel));
     navigate(`/play?${params}`);
   };
 
@@ -92,35 +89,6 @@ export function LobbyPage() {
           ))}
         </div>
       </div>
-
-      {/* 난이도 선택 (하노이탑) */}
-      {gameId === 'hanoi' && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-          <h3 style={{ color: '#666', fontSize: 12, textTransform: 'uppercase', letterSpacing: 2 }}>난이도</h3>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {[3, 4, 5, 6, 7, 8].map(lv => (
-              <button
-                key={lv}
-                onClick={() => setHanoiLevel(lv)}
-                style={{
-                  padding: '12px 18px', borderRadius: 10, border: '2px solid',
-                  borderColor: lv === hanoiLevel ? '#4aff9e' : '#333',
-                  background: lv === hanoiLevel ? '#4aff9e15' : '#2a2a4a',
-                  color: lv === hanoiLevel ? '#4aff9e' : '#aaa',
-                  cursor: 'pointer', fontSize: 16, fontWeight: 'bold',
-                  minWidth: 52, transition: 'all 0.15s',
-                }}
-              >
-                {lv}
-                <br />
-                <span style={{ fontSize: 10, fontWeight: 'normal', color: '#666' }}>
-                  {Math.pow(2, lv) - 1}회
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* 입력 방식 (마우스 전용 게임은 숨김) */}
       {gameId !== 'hanoi' && (

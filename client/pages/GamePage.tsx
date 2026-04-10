@@ -97,6 +97,30 @@ export function GamePage() {
     };
   }, []);
 
+  // 하노이: 레벨 드롭다운
+  const [hanoiLevel, setHanoiLevel] = useState(() => {
+    const lv = parseInt(searchParams.get('level') || '3');
+    return isNaN(lv) ? 3 : Math.max(3, Math.min(8, lv));
+  });
+
+  const changeHanoiLevel = useCallback((lv: number) => {
+    setHanoiLevel(lv);
+    const params = new URLSearchParams(searchParams);
+    params.set('level', String(lv));
+    navigate(`/play?${params}`, { replace: true });
+    // 약간의 딜레이 후 재시작 (URL 반영 후)
+    setTimeout(() => startGameRef.current(), 0);
+  }, [searchParams, navigate]);
+
+  // 하노이: 자동 시작
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (gameId === 'hanoi' && !autoStarted.current && canvasRef.current) {
+      autoStarted.current = true;
+      startGameRef.current();
+    }
+  }, [gameId]);
+
   const gameDef = GAME_REGISTRY[gameId];
 
   return (
@@ -104,10 +128,27 @@ export function GamePage() {
       {/* 상단 바 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: canvasSize.w, maxWidth: '100%' }}>
         <h2 style={{ margin: 0 }}>{gameDef?.name}</h2>
+        {gameId === 'hanoi' && (
+          <select
+            value={hanoiLevel}
+            onChange={e => changeHanoiLevel(Number(e.target.value))}
+            style={{
+              padding: '4px 8px', borderRadius: 6, border: '1px solid #555',
+              background: '#2a2a4a', color: '#4aff9e', fontSize: 14,
+              cursor: 'pointer', outline: 'none',
+            }}
+          >
+            {[3, 4, 5, 6, 7, 8].map(lv => (
+              <option key={lv} value={lv}>디스크 {lv}개</option>
+            ))}
+          </select>
+        )}
         <span style={{ color: '#888', fontSize: 14 }}>{playerName}</span>
-        <span style={{ color: '#555', fontSize: 12 }}>
-          {inputMode === 'mouse' ? '🖱️' : enableKeyboard ? '⌨️' : (connected ? '✓ micro:bit' : 'micro:bit')}
-        </span>
+        {gameId !== 'hanoi' && (
+          <span style={{ color: '#555', fontSize: 12 }}>
+            {inputMode === 'mouse' ? '🖱️' : enableKeyboard ? '⌨️' : (connected ? '✓ micro:bit' : 'micro:bit')}
+          </span>
+        )}
         <div style={{ flex: 1 }} />
         <button
           onClick={() => navigate('/lobby')}

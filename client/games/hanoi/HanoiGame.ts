@@ -1,5 +1,6 @@
 import { GameEngine, GameCallbacks } from '../../engine/GameEngine';
 import { InputManager } from '../../engine/InputManager';
+import { submitScore } from '../../api/client';
 import * as C from './config';
 
 interface DiskInfo {
@@ -93,6 +94,7 @@ export class HanoiGame extends GameEngine {
 
     if (this.pegs[2].length === this.level) {
       this.won = true;
+      this.recordToSheet();
     }
   }
 
@@ -306,6 +308,12 @@ export class HanoiGame extends GameEngine {
 
   private diskY(stackIndex: number): number {
     return C.PEG_BASE_Y - C.DISK_HEIGHT * (stackIndex + 1);
+  }
+
+  private recordToSheet(): void {
+    const name = localStorage.getItem('playerName') || '';
+    const email = localStorage.getItem('playerEmail') || '';
+    submitScore(name, email, `hanoi-lv${this.level}`, this.moves, 'mouse');
   }
 
   private parseLevelFromURL(): number {

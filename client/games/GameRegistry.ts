@@ -41,7 +41,7 @@ const ALL_GAMES: Record<string, GameDef> = {
     enabled: true,
     name: '하노이탑',
     create: (canvas, input, callbacks) => new HanoiGame(canvas, input, callbacks),
-    commands: {},  // 마우스 클릭 전용
+    commands: {},
   },
 };
 

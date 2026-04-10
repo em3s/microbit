@@ -13,6 +13,11 @@ export const PEG_BASE_HEIGHT = 10;
 export const DISK_HEIGHT = 30;
 export const DISK_MIN_WIDTH = 40;
 export const DISK_MAX_WIDTH = 140;
+export const DISK_HIT_PADDING = 10;
+
+// 드래그 & 드롭
+export const DROP_SPEED = 1500;     // px/s
+export const DROP_OFFSET_Y = 60;    // 드롭 시작 위치 (목표 위 px)
 
 // 색상
 export const DISK_COLORS = [
@@ -23,12 +28,7 @@ export const PEG_COLOR = '#3a3a5a';
 export const BG_COLOR = '#1a1a2e';
 export const SELECTED_GLOW = '#ffd700';
 
-// 난이도 기본값
+// 난이도
 export const DEFAULT_LEVEL = 3;
 export const MIN_LEVEL = 3;
 export const MAX_LEVEL = 8;
-
-// 마우스 클릭 전용 — 명령어/키보드 매핑 없음
-export const COMMAND_COOLDOWNS = {} as const;
-export const KEYBOARD_MAP = {} as const;
-export const ANALOG_CONFIGS = {} as const;

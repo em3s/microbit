@@ -128,7 +128,7 @@ export function GamePage() {
       {/* 상단 바 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: canvasSize.w, maxWidth: '100%' }}>
         <h2 style={{ margin: 0 }}>{gameDef?.name}</h2>
-        {gameId === 'hanoi' && (
+        {gameId === 'hanoi' && <>
           <select
             value={hanoiLevel}
             onChange={e => changeHanoiLevel(Number(e.target.value))}
@@ -151,7 +151,7 @@ export function GamePage() {
           >
             초기화
           </button>
-        )}
+        </>}
         <span style={{ color: '#888', fontSize: 14 }}>{playerName}</span>
         {gameId !== 'hanoi' && (
           <span style={{ color: '#555', fontSize: 12 }}>

@@ -5,7 +5,6 @@ import { COMMAND_COOLDOWNS as RUNNER_COOLDOWNS, KEYBOARD_MAP as RUNNER_KEYS } fr
 import { DodgeGame } from './dodge/DodgeGame';
 import { COMMAND_COOLDOWNS as DODGE_COOLDOWNS, KEYBOARD_MAP as DODGE_KEYS, ANALOG_CONFIGS as DODGE_ANALOG } from './dodge/config';
 import { HanoiGame } from './hanoi/HanoiGame';
-import { COMMAND_COOLDOWNS as HANOI_COOLDOWNS, KEYBOARD_MAP as HANOI_KEYS } from './hanoi/config';
 import { WebSerialManager } from '../serial/WebSerialManager';
 
 interface GameDef {
@@ -42,11 +41,7 @@ const ALL_GAMES: Record<string, GameDef> = {
     enabled: true,
     name: '하노이탑',
     create: (canvas, input, callbacks) => new HanoiGame(canvas, input, callbacks),
-    commands: {
-      a: { cooldownMs: HANOI_COOLDOWNS.a, keyboardKey: HANOI_KEYS.a },
-      b: { cooldownMs: HANOI_COOLDOWNS.b, keyboardKey: HANOI_KEYS.b },
-      c: { cooldownMs: HANOI_COOLDOWNS.c, keyboardKey: HANOI_KEYS.c },
-    },
+    commands: {},  // 마우스 클릭 전용
   },
 };
 

@@ -27,7 +27,8 @@ export function LobbyPage() {
   }, [playerName, navigate]);
 
   const handleStart = () => {
-    const params = new URLSearchParams({ game: gameId, input: inputMode });
+    const input = gameId === 'hanoi' ? 'mouse' : inputMode;
+    const params = new URLSearchParams({ game: gameId, input });
     if (gameId === 'hanoi') params.set('level', String(hanoiLevel));
     navigate(`/play?${params}`);
   };
@@ -121,52 +122,54 @@ export function LobbyPage() {
         </div>
       )}
 
-      {/* 입력 방식 */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-        <h3 style={{ color: '#666', fontSize: 12, textTransform: 'uppercase', letterSpacing: 2 }}>입력 방식</h3>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button
-            onClick={() => {
-              setInputMode('microbit');
-              if (!connected && serialSupported) connect();
-            }}
-            style={{
-              padding: '16px 32px', borderRadius: 14, border: '2px solid',
-              borderColor: inputMode === 'microbit' ? '#4aff9e' : '#333',
-              background: inputMode === 'microbit' ? '#4aff9e15' : '#2a2a4a',
-              color: inputMode === 'microbit' ? '#4aff9e' : '#aaa',
-              cursor: serialSupported ? 'pointer' : 'not-allowed',
-              fontSize: 16, fontWeight: 'bold',
-              opacity: serialSupported ? 1 : 0.4,
-              textAlign: 'center',
-            }}
-            disabled={!serialSupported}
-          >
-            <span style={{ fontSize: 32 }}>&#x1F4BB;</span>
-            <br />
-            micro:bit
-            <br />
-            <span style={{ fontSize: 11, fontWeight: 'normal', color: connected ? '#4aff9e' : '#777' }}>
-              {connected ? '연결됨 ✓' : (serialSupported ? '클릭하여 연결' : 'Chrome 필요')}
-            </span>
-          </button>
-          <button
-            onClick={() => setInputMode('keyboard')}
-            style={{
-              padding: '16px 32px', borderRadius: 14, border: '2px solid',
-              borderColor: inputMode === 'keyboard' ? '#ffa04a' : '#333',
-              background: inputMode === 'keyboard' ? '#ffa04a15' : '#2a2a4a',
-              color: inputMode === 'keyboard' ? '#ffa04a' : '#aaa',
-              cursor: 'pointer', fontSize: 16, fontWeight: 'bold',
-              textAlign: 'center',
-            }}
-          >
-            <span style={{ fontSize: 32 }}>&#x2328;&#xFE0F;</span>
-            <br />
-            키보드
-          </button>
+      {/* 입력 방식 (마우스 전용 게임은 숨김) */}
+      {gameId !== 'hanoi' && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+          <h3 style={{ color: '#666', fontSize: 12, textTransform: 'uppercase', letterSpacing: 2 }}>입력 방식</h3>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button
+              onClick={() => {
+                setInputMode('microbit');
+                if (!connected && serialSupported) connect();
+              }}
+              style={{
+                padding: '16px 32px', borderRadius: 14, border: '2px solid',
+                borderColor: inputMode === 'microbit' ? '#4aff9e' : '#333',
+                background: inputMode === 'microbit' ? '#4aff9e15' : '#2a2a4a',
+                color: inputMode === 'microbit' ? '#4aff9e' : '#aaa',
+                cursor: serialSupported ? 'pointer' : 'not-allowed',
+                fontSize: 16, fontWeight: 'bold',
+                opacity: serialSupported ? 1 : 0.4,
+                textAlign: 'center',
+              }}
+              disabled={!serialSupported}
+            >
+              <span style={{ fontSize: 32 }}>&#x1F4BB;</span>
+              <br />
+              micro:bit
+              <br />
+              <span style={{ fontSize: 11, fontWeight: 'normal', color: connected ? '#4aff9e' : '#777' }}>
+                {connected ? '연결됨 ✓' : (serialSupported ? '클릭하여 연결' : 'Chrome 필요')}
+              </span>
+            </button>
+            <button
+              onClick={() => setInputMode('keyboard')}
+              style={{
+                padding: '16px 32px', borderRadius: 14, border: '2px solid',
+                borderColor: inputMode === 'keyboard' ? '#ffa04a' : '#333',
+                background: inputMode === 'keyboard' ? '#ffa04a15' : '#2a2a4a',
+                color: inputMode === 'keyboard' ? '#ffa04a' : '#aaa',
+                cursor: 'pointer', fontSize: 16, fontWeight: 'bold',
+                textAlign: 'center',
+              }}
+            >
+              <span style={{ fontSize: 32 }}>&#x2328;&#xFE0F;</span>
+              <br />
+              키보드
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 시작 버튼 */}
       <button

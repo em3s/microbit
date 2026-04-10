@@ -20,23 +20,36 @@ type AnimState = {
 };
 
 export class HanoiGame extends GameEngine {
-  private input: InputManager;
   private level: number;
-  private pegs: DiskInfo[][] = [[], [], []]; // 각 기둥의 디스크 스택
-  private selectedPeg: number | null = null; // 선택된 소스 기둥
+  private pegs: DiskInfo[][] = [[], [], []];
+  private selectedPeg: number | null = null;
   private moves = 0;
   private optimalMoves = 0;
   private won = false;
   private anim: AnimState | null = null;
+  private clickQueue: number[] = []; // 클릭된 기둥 인덱스 큐
 
   // 기둥 x 좌표
   private pegX: number[] = [];
 
-  constructor(canvas: HTMLCanvasElement, input: InputManager, callbacks: GameCallbacks) {
+  private onClick = (e: MouseEvent): void => {
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = C.CANVAS_WIDTH / rect.width;
+    const clickX = (e.clientX - rect.left) * scaleX;
+
+    // 어떤 기둥 영역을 클릭했는지 판별
+    const zoneWidth = C.CANVAS_WIDTH / C.PEG_COUNT;
+    const pegIdx = Math.floor(clickX / zoneWidth);
+    if (pegIdx >= 0 && pegIdx < C.PEG_COUNT) {
+      this.clickQueue.push(pegIdx);
+    }
+  };
+
+  constructor(canvas: HTMLCanvasElement, _input: InputManager, callbacks: GameCallbacks) {
     super(canvas, callbacks);
-    this.input = input;
     canvas.width = C.CANVAS_WIDTH;
     canvas.height = C.CANVAS_HEIGHT;
+    canvas.style.cursor = 'pointer';
 
     // URL에서 난이도 읽기
     const params = new URLSearchParams(window.location.search);
@@ -48,6 +61,15 @@ export class HanoiGame extends GameEngine {
     for (let i = 0; i < C.PEG_COUNT; i++) {
       this.pegX.push(spacing * (i + 1));
     }
+
+    // 마우스 클릭 리스너
+    canvas.addEventListener('click', this.onClick);
+  }
+
+  stop(): void {
+    super.stop();
+    this.canvas.removeEventListener('click', this.onClick);
+    this.canvas.style.cursor = '';
   }
 
   protected init(): void {
@@ -56,6 +78,7 @@ export class HanoiGame extends GameEngine {
     this.moves = 0;
     this.won = false;
     this.anim = null;
+    this.clickQueue.length = 0;
     this.optimalMoves = Math.pow(2, this.level) - 1;
 
     // 첫 번째 기둥에 디스크 쌓기 (큰 것부터)
@@ -70,23 +93,23 @@ export class HanoiGame extends GameEngine {
   }
 
   protected update(dt: number): void {
-    this.input.update();
-
     // 애니메이션 처리
     if (this.anim) {
       this.updateAnimation(dt);
-      return; // 애니메이션 중에는 입력 무시
+      this.clickQueue.length = 0; // 애니메이션 중 클릭 무시
+      return;
     }
 
-    if (this.won) return;
+    if (this.won) {
+      this.clickQueue.length = 0;
+      return;
+    }
 
-    // 기둥 선택 입력
-    const cmds = ['a', 'b', 'c'];
-    for (let i = 0; i < cmds.length; i++) {
-      if (this.input.wasCommandFired(cmds[i])) {
-        this.handlePegSelect(i);
-        break;
-      }
+    // 클릭 큐 처리
+    while (this.clickQueue.length > 0) {
+      const pegIdx = this.clickQueue.shift()!;
+      this.handlePegSelect(pegIdx);
+      if (this.anim) break; // 이동 시작되면 나머지 클릭 무시
     }
   }
 
@@ -284,9 +307,9 @@ export class HanoiGame extends GameEngine {
       ctx.textAlign = 'center';
       if (this.selectedPeg !== null) {
         ctx.fillStyle = C.SELECTED_GLOW;
-        ctx.fillText(`${labels[this.selectedPeg]} 선택됨 → 옮길 기둥을 선택하세요 (같은 기둥 = 취소)`, W / 2, H - 16);
+        ctx.fillText(`${labels[this.selectedPeg]} 선택됨 → 옮길 기둥을 클릭하세요`, W / 2, H - 16);
       } else {
-        ctx.fillText('기둥을 선택하세요 (A / B / C)', W / 2, H - 16);
+        ctx.fillText('기둥을 클릭하세요', W / 2, H - 16);
       }
     }
   }

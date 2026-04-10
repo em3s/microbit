@@ -9,7 +9,6 @@ import type { InputManager } from '../engine/InputManager';
 const KEYBOARD_HINTS: Record<string, string> = {
   runner: 'Space = 점프 | S = 슬라이드 | D = 더블점프',
   dodge: '← → = 이동 | ↑ ↓ = 감도 조절',
-  hanoi: 'A = 왼쪽 기둥 | S = 가운데 기둥 | D = 오른쪽 기둥',
 };
 
 // 게임별 캔버스 크기
@@ -27,7 +26,7 @@ export function GamePage() {
 
   const gameId = searchParams.get('game') || Object.keys(GAME_REGISTRY)[0] || 'dodge';
   const inputMode = searchParams.get('input') || 'microbit';
-  const enableKeyboard = inputMode === 'keyboard';
+  const enableKeyboard = inputMode === 'keyboard' || inputMode === 'mouse';
 
   const canvasSize = CANVAS_SIZES[gameId] || { w: 400, h: 500 };
 
@@ -107,7 +106,7 @@ export function GamePage() {
         <h2 style={{ margin: 0 }}>{gameDef?.name}</h2>
         <span style={{ color: '#888', fontSize: 14 }}>{playerName}</span>
         <span style={{ color: '#555', fontSize: 12 }}>
-          {enableKeyboard ? '⌨️' : (connected ? '✓ micro:bit' : 'micro:bit')}
+          {inputMode === 'mouse' ? '🖱️' : enableKeyboard ? '⌨️' : (connected ? '✓ micro:bit' : 'micro:bit')}
         </span>
         <div style={{ flex: 1 }} />
         <button
@@ -136,7 +135,7 @@ export function GamePage() {
             background: 'rgba(0,0,0,0.6)', borderRadius: 8, gap: 16,
           }}>
             <h3>{gameDef?.name}</h3>
-            {!enableKeyboard && (
+            {!enableKeyboard && inputMode !== 'mouse' && (
               <button
                 onClick={connected ? disconnect : connect}
                 style={{

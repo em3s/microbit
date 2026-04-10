@@ -28,17 +28,7 @@ export const DEFAULT_LEVEL = 3;
 export const MIN_LEVEL = 3;
 export const MAX_LEVEL = 8;
 
-// 명령어: 기둥 선택
-export const COMMAND_COOLDOWNS = {
-  a: 200,
-  b: 200,
-  c: 200,
-} as const;
-
-export const KEYBOARD_MAP = {
-  a: 'a',
-  b: 's',
-  c: 'd',
-} as const;
-
+// 마우스 클릭 전용 — 명령어/키보드 매핑 없음
+export const COMMAND_COOLDOWNS = {} as const;
+export const KEYBOARD_MAP = {} as const;
 export const ANALOG_CONFIGS = {} as const;

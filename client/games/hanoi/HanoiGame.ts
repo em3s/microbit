@@ -3,46 +3,106 @@ import { InputManager } from '../../engine/InputManager';
 import * as C from './config';
 
 interface DiskInfo {
-  size: number;       // 1 = smallest, N = largest
+  size: number;
   color: string;
   width: number;
 }
 
-type AnimState = {
+interface DragState {
   disk: DiskInfo;
   fromPeg: number;
+  mx: number;  // 마우스 캔버스 좌표
+  my: number;
+}
+
+// 놓은 뒤 떨어지는 짧은 애니메이션
+interface DropAnim {
+  disk: DiskInfo;
   toPeg: number;
-  phase: 'lift' | 'move' | 'drop';
   x: number;
   y: number;
-  targetX: number;
   targetY: number;
-};
+}
 
 export class HanoiGame extends GameEngine {
   private level: number;
   private pegs: DiskInfo[][] = [[], [], []];
-  private selectedPeg: number | null = null;
   private moves = 0;
   private optimalMoves = 0;
   private won = false;
-  private anim: AnimState | null = null;
-  private clickQueue: number[] = []; // 클릭된 기둥 인덱스 큐
 
-  // 기둥 x 좌표
+  private drag: DragState | null = null;
+  private dropAnim: DropAnim | null = null;
+
   private pegX: number[] = [];
 
-  private onClick = (e: MouseEvent): void => {
+  // --- 마우스 이벤트 ---
+  private toCanvas(e: MouseEvent): { x: number; y: number } {
     const rect = this.canvas.getBoundingClientRect();
-    const scaleX = C.CANVAS_WIDTH / rect.width;
-    const clickX = (e.clientX - rect.left) * scaleX;
+    return {
+      x: (e.clientX - rect.left) * (C.CANVAS_WIDTH / rect.width),
+      y: (e.clientY - rect.top) * (C.CANVAS_HEIGHT / rect.height),
+    };
+  }
 
-    // 어떤 기둥 영역을 클릭했는지 판별
-    const zoneWidth = C.CANVAS_WIDTH / C.PEG_COUNT;
-    const pegIdx = Math.floor(clickX / zoneWidth);
-    if (pegIdx >= 0 && pegIdx < C.PEG_COUNT) {
-      this.clickQueue.push(pegIdx);
+  private getPegAt(cx: number): number {
+    const zone = C.CANVAS_WIDTH / C.PEG_COUNT;
+    return Math.max(0, Math.min(C.PEG_COUNT - 1, Math.floor(cx / zone)));
+  }
+
+  private onMouseDown = (e: MouseEvent): void => {
+    if (this.won || this.drag || this.dropAnim) return;
+    const { x, y } = this.toCanvas(e);
+    const pegIdx = this.getPegAt(x);
+    const stack = this.pegs[pegIdx];
+    if (stack.length === 0) return;
+
+    // 맨 위 디스크 히트 체크 (여유 있게)
+    const topIdx = stack.length - 1;
+    const disk = stack[topIdx];
+    const diskX = this.pegX[pegIdx] - disk.width / 2;
+    const diskY = this.getDiskY(pegIdx, topIdx);
+    if (x >= diskX - 10 && x <= diskX + disk.width + 10 &&
+        y >= diskY - 10 && y <= C.PEG_BASE_Y + 10) {
+      stack.pop();
+      this.drag = { disk, fromPeg: pegIdx, mx: x, my: y };
+      this.canvas.style.cursor = 'grabbing';
     }
+  };
+
+  private onMouseMove = (e: MouseEvent): void => {
+    if (!this.drag) return;
+    const { x, y } = this.toCanvas(e);
+    this.drag.mx = x;
+    this.drag.my = y;
+  };
+
+  private onMouseUp = (_e: MouseEvent): void => {
+    if (!this.drag) return;
+    const { disk, fromPeg, mx } = this.drag;
+    const toPeg = this.getPegAt(mx);
+    const targetStack = this.pegs[toPeg];
+
+    const valid = toPeg !== fromPeg &&
+      (targetStack.length === 0 || targetStack[targetStack.length - 1].size > disk.size);
+
+    if (valid) {
+      // 드롭 애니메이션 시작
+      const targetY = this.getDiskY(toPeg, targetStack.length);
+      this.dropAnim = {
+        disk,
+        toPeg,
+        x: this.pegX[toPeg],
+        y: this.getDiskY(toPeg, targetStack.length) - 60, // 살짝 위에서 시작
+        targetY,
+      };
+    } else {
+      // 무효 → 원래 기둥으로 복귀
+      this.pegs[fromPeg].push(disk);
+    }
+
+    this.drag = null;
+    this.canvas.style.cursor = 'pointer';
   };
 
   constructor(canvas: HTMLCanvasElement, _input: InputManager, callbacks: GameCallbacks) {
@@ -51,37 +111,38 @@ export class HanoiGame extends GameEngine {
     canvas.height = C.CANVAS_HEIGHT;
     canvas.style.cursor = 'pointer';
 
-    // URL에서 난이도 읽기
     const params = new URLSearchParams(window.location.search);
     const lvl = parseInt(params.get('level') || String(C.DEFAULT_LEVEL));
     this.level = Math.max(C.MIN_LEVEL, Math.min(C.MAX_LEVEL, isNaN(lvl) ? C.DEFAULT_LEVEL : lvl));
 
-    // 기둥 x 좌표 계산
     const spacing = C.CANVAS_WIDTH / (C.PEG_COUNT + 1);
     for (let i = 0; i < C.PEG_COUNT; i++) {
       this.pegX.push(spacing * (i + 1));
     }
 
-    // 마우스 클릭 리스너
-    canvas.addEventListener('click', this.onClick);
+    canvas.addEventListener('mousedown', this.onMouseDown);
+    canvas.addEventListener('mousemove', this.onMouseMove);
+    canvas.addEventListener('mouseup', this.onMouseUp);
+    canvas.addEventListener('mouseleave', this.onMouseUp);
   }
 
   stop(): void {
     super.stop();
-    this.canvas.removeEventListener('click', this.onClick);
+    this.canvas.removeEventListener('mousedown', this.onMouseDown);
+    this.canvas.removeEventListener('mousemove', this.onMouseMove);
+    this.canvas.removeEventListener('mouseup', this.onMouseUp);
+    this.canvas.removeEventListener('mouseleave', this.onMouseUp);
     this.canvas.style.cursor = '';
   }
 
   protected init(): void {
     this.pegs = [[], [], []];
-    this.selectedPeg = null;
     this.moves = 0;
     this.won = false;
-    this.anim = null;
-    this.clickQueue.length = 0;
+    this.drag = null;
+    this.dropAnim = null;
     this.optimalMoves = Math.pow(2, this.level) - 1;
 
-    // 첫 번째 기둥에 디스크 쌓기 (큰 것부터)
     for (let i = this.level; i >= 1; i--) {
       const t = (i - 1) / Math.max(this.level - 1, 1);
       this.pegs[0].push({
@@ -93,114 +154,26 @@ export class HanoiGame extends GameEngine {
   }
 
   protected update(dt: number): void {
-    // 애니메이션 처리
-    if (this.anim) {
-      this.updateAnimation(dt);
-      this.clickQueue.length = 0; // 애니메이션 중 클릭 무시
-      return;
-    }
-
-    if (this.won) {
-      this.clickQueue.length = 0;
-      return;
-    }
-
-    // 클릭 큐 처리
-    while (this.clickQueue.length > 0) {
-      const pegIdx = this.clickQueue.shift()!;
-      this.handlePegSelect(pegIdx);
-      if (this.anim) break; // 이동 시작되면 나머지 클릭 무시
-    }
-  }
-
-  private handlePegSelect(pegIdx: number): void {
-    if (this.selectedPeg === null) {
-      // 소스 기둥 선택
-      if (this.pegs[pegIdx].length === 0) return; // 빈 기둥
-      this.selectedPeg = pegIdx;
-    } else {
-      if (pegIdx === this.selectedPeg) {
-        // 같은 기둥 → 취소
-        this.selectedPeg = null;
-        return;
-      }
-      // 이동 시도
-      const sourcePeg = this.pegs[this.selectedPeg];
-      const targetPeg = this.pegs[pegIdx];
-      const disk = sourcePeg[sourcePeg.length - 1];
-
-      if (targetPeg.length > 0 && targetPeg[targetPeg.length - 1].size < disk.size) {
-        // 큰 디스크를 작은 디스크 위에 놓을 수 없음 → 취소
-        this.selectedPeg = null;
-        return;
-      }
-
-      // 유효한 이동 → 애니메이션 시작
-      const fromPeg = this.selectedPeg;
-      sourcePeg.pop();
-      this.selectedPeg = null;
-
-      const fromX = this.pegX[fromPeg];
-      const fromY = this.getDiskY(fromPeg, sourcePeg.length); // 이미 pop했으므로 현재 길이가 이전 top 위치
-      const toX = this.pegX[pegIdx];
-      const toY = this.getDiskY(pegIdx, targetPeg.length);
-
-      this.anim = {
-        disk,
-        fromPeg,
-        toPeg: pegIdx,
-        phase: 'lift',
-        x: fromX,
-        y: fromY,
-        targetX: toX,
-        targetY: toY,
-      };
-    }
-  }
-
-  private getDiskY(pegIdx: number, stackIndex: number): number {
-    return C.PEG_BASE_Y - C.DISK_HEIGHT * (stackIndex + 1);
-  }
-
-  private readonly ANIM_SPEED = 1200; // px/s
-  private readonly LIFT_Y = C.PEG_BASE_Y - C.PEG_HEIGHT - 40;
-
-  private updateAnimation(dt: number): void {
-    const a = this.anim!;
-    const speed = this.ANIM_SPEED;
-
-    if (a.phase === 'lift') {
-      a.y -= speed * dt;
-      if (a.y <= this.LIFT_Y) {
-        a.y = this.LIFT_Y;
-        a.phase = 'move';
-      }
-    } else if (a.phase === 'move') {
-      const dx = a.targetX - a.x;
-      if (Math.abs(dx) < speed * dt) {
-        a.x = a.targetX;
-        a.phase = 'drop';
-      } else {
-        a.x += Math.sign(dx) * speed * dt;
-      }
-    } else if (a.phase === 'drop') {
-      a.y += speed * dt;
+    if (this.dropAnim) {
+      const a = this.dropAnim;
+      a.y += 1500 * dt;
       if (a.y >= a.targetY) {
         a.y = a.targetY;
-        // 애니메이션 완료 → 디스크 배치
         this.pegs[a.toPeg].push(a.disk);
         this.moves++;
-        this.anim = null;
+        this.dropAnim = null;
 
-        // 승리 체크: 마지막 기둥에 모든 디스크
         if (this.pegs[2].length === this.level) {
           this.won = true;
           this.score = this.calculateScore();
-          // 약간의 딜레이 후 게임오버 호출
           setTimeout(() => this.gameOver(), 1000);
         }
       }
     }
+  }
+
+  private getDiskY(_pegIdx: number, stackIndex: number): number {
+    return C.PEG_BASE_Y - C.DISK_HEIGHT * (stackIndex + 1);
   }
 
   private calculateScore(): number {
@@ -212,52 +185,47 @@ export class HanoiGame extends GameEngine {
     const W = C.CANVAS_WIDTH;
     const H = C.CANVAS_HEIGHT;
 
-    // 배경
     ctx.fillStyle = C.BG_COLOR;
     ctx.fillRect(0, 0, W, H);
 
-    // 기둥 라벨
     const labels = ['A', 'B', 'C'];
+
+    // 드래그 중이면 목표 기둥 하이라이트
+    const hoverPeg = this.drag ? this.getPegAt(this.drag.mx) : -1;
 
     for (let i = 0; i < C.PEG_COUNT; i++) {
       const px = this.pegX[i];
-      const isSelected = this.selectedPeg === i;
+      const isHover = hoverPeg === i;
 
       // 기둥 바닥
-      ctx.fillStyle = isSelected ? C.SELECTED_GLOW : C.PEG_COLOR;
-      ctx.fillRect(
-        px - C.PEG_BASE_WIDTH / 2,
-        C.PEG_BASE_Y,
-        C.PEG_BASE_WIDTH,
-        C.PEG_BASE_HEIGHT,
-      );
+      ctx.fillStyle = isHover ? C.SELECTED_GLOW : C.PEG_COLOR;
+      ctx.fillRect(px - C.PEG_BASE_WIDTH / 2, C.PEG_BASE_Y, C.PEG_BASE_WIDTH, C.PEG_BASE_HEIGHT);
 
-      // 기둥 기둥
-      ctx.fillRect(
-        px - C.PEG_WIDTH / 2,
-        C.PEG_BASE_Y - C.PEG_HEIGHT,
-        C.PEG_WIDTH,
-        C.PEG_HEIGHT,
-      );
+      // 기둥
+      ctx.fillRect(px - C.PEG_WIDTH / 2, C.PEG_BASE_Y - C.PEG_HEIGHT, C.PEG_WIDTH, C.PEG_HEIGHT);
 
       // 라벨
-      ctx.fillStyle = isSelected ? C.SELECTED_GLOW : '#666';
+      ctx.fillStyle = isHover ? C.SELECTED_GLOW : '#666';
       ctx.font = 'bold 16px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(labels[i], px, C.PEG_BASE_Y + 36);
 
-      // 디스크 렌더링
+      // 디스크
       const stack = this.pegs[i];
       for (let j = 0; j < stack.length; j++) {
-        const disk = stack[j];
-        const dy = this.getDiskY(i, j);
-        this.renderDisk(ctx, px, dy, disk, isSelected && j === stack.length - 1);
+        this.renderDisk(ctx, px, this.getDiskY(i, j), stack[j], false);
       }
     }
 
-    // 애니메이션 중인 디스크
-    if (this.anim) {
-      this.renderDisk(ctx, this.anim.x, this.anim.y, this.anim.disk, false);
+    // 드롭 애니메이션 디스크
+    if (this.dropAnim) {
+      const a = this.dropAnim;
+      this.renderDisk(ctx, a.x, a.y, a.disk, false);
+    }
+
+    // 드래그 중인 디스크 (마우스 위치에)
+    if (this.drag) {
+      this.renderDisk(ctx, this.drag.mx, this.drag.my - C.DISK_HEIGHT / 2, this.drag.disk, true);
     }
 
     // HUD
@@ -270,7 +238,7 @@ export class HanoiGame extends GameEngine {
     ctx.font = '14px monospace';
     ctx.fillText(`최적: ${this.optimalMoves}`, 16, 54);
 
-    // 승리 메시지
+    // 승리
     if (this.won) {
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
       ctx.fillRect(0, H / 2 - 60, W, 120);
@@ -285,45 +253,35 @@ export class HanoiGame extends GameEngine {
       ctx.fillText(`${this.moves}회 이동 (최적 ${this.optimalMoves}회)`, W / 2, H / 2 + 30);
     }
 
-    // 선택 안내 (하단)
-    if (!this.won && !this.anim) {
+    // 안내
+    if (!this.won && !this.drag && !this.dropAnim) {
       ctx.fillStyle = '#555';
       ctx.font = '12px monospace';
       ctx.textAlign = 'center';
-      if (this.selectedPeg !== null) {
-        ctx.fillStyle = C.SELECTED_GLOW;
-        ctx.fillText(`${labels[this.selectedPeg]} 선택됨 → 옮길 기둥을 클릭하세요`, W / 2, H - 16);
-      } else {
-        ctx.fillText('기둥을 클릭하세요', W / 2, H - 16);
-      }
+      ctx.fillText('디스크를 드래그하여 옮기세요', W / 2, H - 16);
     }
   }
 
   private renderDisk(
     ctx: CanvasRenderingContext2D,
-    cx: number,
-    y: number,
-    disk: DiskInfo,
-    highlight: boolean,
+    cx: number, y: number,
+    disk: DiskInfo, highlight: boolean,
   ): void {
     const w = disk.width;
     const h = C.DISK_HEIGHT;
     const x = cx - w / 2;
     const r = 6;
 
-    // 그림자 / 하이라이트
     if (highlight) {
       ctx.shadowColor = C.SELECTED_GLOW;
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 16;
     }
 
-    // 둥근 사각형
     ctx.fillStyle = disk.color;
     ctx.beginPath();
     ctx.roundRect(x, y, w, h - 2, r);
     ctx.fill();
 
-    // 디스크 번호
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
     ctx.fillStyle = 'rgba(0,0,0,0.4)';

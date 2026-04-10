@@ -105,12 +105,12 @@ export function GamePage() {
 
   const changeHanoiLevel = useCallback((lv: number) => {
     setHanoiLevel(lv);
+    // URL을 동기적으로 업데이트 (HanoiGame 생성자가 window.location.search를 읽음)
     const params = new URLSearchParams(searchParams);
     params.set('level', String(lv));
-    navigate(`/play?${params}`, { replace: true });
-    // 약간의 딜레이 후 재시작 (URL 반영 후)
-    setTimeout(() => startGameRef.current(), 0);
-  }, [searchParams, navigate]);
+    window.history.replaceState(null, '', `/play?${params}`);
+    startGameRef.current();
+  }, [searchParams]);
 
   // 하노이: 자동 시작
   const autoStarted = useRef(false);

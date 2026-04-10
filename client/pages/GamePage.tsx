@@ -9,12 +9,14 @@ import type { InputManager } from '../engine/InputManager';
 const KEYBOARD_HINTS: Record<string, string> = {
   runner: 'Space = 점프 | S = 슬라이드 | D = 더블점프',
   dodge: '← → = 이동 | ↑ ↓ = 감도 조절',
+  hanoi: 'A = 왼쪽 기둥 | S = 가운데 기둥 | D = 오른쪽 기둥',
 };
 
 // 게임별 캔버스 크기
 const CANVAS_SIZES: Record<string, { w: number; h: number }> = {
   runner: { w: 800, h: 400 },
   dodge: { w: 400, h: 500 },
+  hanoi: { w: 500, h: 500 },
 };
 
 export function GamePage() {

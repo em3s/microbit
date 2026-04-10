@@ -7,6 +7,7 @@ import { WebSerialManager } from '../serial/WebSerialManager';
 const GAME_DESCRIPTIONS: Record<string, string> = {
   runner: '장애물을 피해 최대한 오래 달리세요',
   dodge: '위에서 떨어지는 블록을 피하세요',
+  hanoi: '모든 디스크를 오른쪽 기둥으로 옮기세요',
 };
 
 export function LobbyPage() {
@@ -19,13 +20,16 @@ export function LobbyPage() {
 
   const [gameId, setGameId] = useState(() => Object.keys(GAME_REGISTRY)[0] || 'dodge');
   const [inputMode, setInputMode] = useState<'microbit' | 'keyboard'>('microbit');
+  const [hanoiLevel, setHanoiLevel] = useState(3);
 
   useEffect(() => {
     if (!playerName) navigate('/');
   }, [playerName, navigate]);
 
   const handleStart = () => {
-    navigate(`/play?game=${gameId}&input=${inputMode}`);
+    const params = new URLSearchParams({ game: gameId, input: inputMode });
+    if (gameId === 'hanoi') params.set('level', String(hanoiLevel));
+    navigate(`/play?${params}`);
   };
 
   const handleLogout = () => {
@@ -87,6 +91,35 @@ export function LobbyPage() {
           ))}
         </div>
       </div>
+
+      {/* 난이도 선택 (하노이탑) */}
+      {gameId === 'hanoi' && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+          <h3 style={{ color: '#666', fontSize: 12, textTransform: 'uppercase', letterSpacing: 2 }}>난이도</h3>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {[3, 4, 5, 6, 7, 8].map(lv => (
+              <button
+                key={lv}
+                onClick={() => setHanoiLevel(lv)}
+                style={{
+                  padding: '12px 18px', borderRadius: 10, border: '2px solid',
+                  borderColor: lv === hanoiLevel ? '#4aff9e' : '#333',
+                  background: lv === hanoiLevel ? '#4aff9e15' : '#2a2a4a',
+                  color: lv === hanoiLevel ? '#4aff9e' : '#aaa',
+                  cursor: 'pointer', fontSize: 16, fontWeight: 'bold',
+                  minWidth: 52, transition: 'all 0.15s',
+                }}
+              >
+                {lv}
+                <br />
+                <span style={{ fontSize: 10, fontWeight: 'normal', color: '#666' }}>
+                  {Math.pow(2, lv) - 1}회
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 입력 방식 */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>

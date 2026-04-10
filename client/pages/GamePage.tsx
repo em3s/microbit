@@ -145,8 +145,9 @@ export function GamePage() {
           <button
             onClick={() => startGameRef.current()}
             style={{
-              padding: '4px 12px', borderRadius: 6, border: '1px solid #555',
-              background: 'transparent', color: '#aaa', cursor: 'pointer', fontSize: 12,
+              padding: '6px 16px', borderRadius: 6, border: 'none',
+              background: '#ff4a6a', color: '#fff', cursor: 'pointer',
+              fontSize: 13, fontWeight: 'bold',
             }}
           >
             초기화

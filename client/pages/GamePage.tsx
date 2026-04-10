@@ -142,6 +142,15 @@ export function GamePage() {
               <option key={lv} value={lv}>디스크 {lv}개</option>
             ))}
           </select>
+          <button
+            onClick={() => startGameRef.current()}
+            style={{
+              padding: '4px 12px', borderRadius: 6, border: '1px solid #555',
+              background: 'transparent', color: '#aaa', cursor: 'pointer', fontSize: 12,
+            }}
+          >
+            초기화
+          </button>
         )}
         <span style={{ color: '#888', fontSize: 14 }}>{playerName}</span>
         {gameId !== 'hanoi' && (

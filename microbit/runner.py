@@ -1,18 +1,23 @@
 from microbit import *
 
-logo_was_touched = False
+# 러너 컨트롤러
+#   A 버튼        = jump   (점프)
+#   B 버튼        = double (더블 점프, 공중에서)
+#   A + B 동시    = slide  (슬라이드)
 
 while True:
-    if button_a.was_pressed():
-        print("jump")
+    a = button_a.was_pressed()
+    b = button_b.was_pressed()
 
-    if button_b.was_pressed():
+    if a and b:
         print("slide")
-
-    # 로고 터치 (엣지 감지, 한번만)
-    logo_touched = pin_logo.is_touched()
-    if logo_touched and not logo_was_touched:
+    elif a:
+        print("jump")
+    elif b:
         print("double")
-    logo_was_touched = logo_touched
+
+    # 옵션: 로고 터치로 슬라이드
+    # if pin_logo.is_touched():
+    #     print("slide")
 
     sleep(30)

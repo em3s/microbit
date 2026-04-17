@@ -194,18 +194,15 @@ export class RunnerGame extends GameEngine {
     return 'J';
   }
 
+  // CSV 포맷: "d,kind,pstate,sc,go\n"  예) "350,tall,G,120,0"
   private broadcastState(gameOver: boolean): void {
     if (!this.sendSerial) return;
     const next = this.getNextObstacle();
     const d = next ? Math.max(0, Math.floor(next.obstacle.x - (C.PLAYER_X + C.PLAYER_WIDTH))) : 9999;
     const o = next ? next.obstacle.type : 'none';
-    const payload = {
-      d,
-      o,
-      p: this.playerStateCode(),
-      sc: Math.floor(this.score),
-      go: gameOver ? 1 : 0,
-    };
-    this.sendSerial(JSON.stringify(payload) + '\n');
+    const p = this.playerStateCode();
+    const sc = Math.floor(this.score);
+    const go = gameOver ? 1 : 0;
+    this.sendSerial(`${d},${o},${p},${sc},${go}\n`);
   }
 }

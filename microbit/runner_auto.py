@@ -1,54 +1,75 @@
-# 러너 자동 플레이 — 목표 코드 (속도 계산으로 오래 살아남기)
-#
-# 핵심 아이디어:
-#   - 속도는 게임 중에 점점 빨라짐 → 거리만 보면 안 됨
-#   - 두 번 관찰하면 속도를 계산할 수 있음:  속도 = (줄어든 거리) / (지난 시간)
-#   - 도달 예상 시간(eta) = 거리 / 속도
-#   - 부딪히기 400ms 전쯤 점프하면 넉넉히 넘어감
-#
-# 주의:
-#   - 장애물이 지나가면 d가 다음 장애물 거리로 "점프"해서 늘어남
-#     → 이때 속도가 음수가 됨 → 무시해야 함 (speed > 0 체크)
-#   - combo(더 높은 장애물)는 공중 상태(p == "J")에서 double을 추가로 쳐야 완전히 넘어감
+from microbit import *
 
-from microbit import uart, running_time
-import ujson
+# 러너 자동 플레이
+# 게임이 50ms마다 보냄: "d,kind,pstate,sc,go\n"  (예: "350,tall,G,120,0")
+#   d      = 다음 장애물까지 거리 (픽셀)
+#   kind   = "tall" / "combo" / "gate" / "none"
+#   pstate = "G"(땅) / "J"(공중) / "D"(슬라이드중)
+#
+# LED: HEART(시작) → YES(수신) / ARROW_N(jump,double) / ARROW_S(slide) / NO(에러)
 
 uart.init(baudrate=115200)
+display.show(Image.HEART)
+
+_buf = b""
 
 def wait_state():
+    global _buf
     while True:
-        line = uart.readline()
-        if line:
-            try:
-                s = ujson.loads(line)
-                return s["d"], s["o"], s["p"], running_time()
-            except:
-                pass
+        chunk = uart.read()
+        if chunk:
+            _buf += chunk
+        if b"\n" in _buf:
+            lines = _buf.split(b"\n")
+            _buf = lines[-1]
+            if len(lines) >= 2:
+                try:
+                    p = str(lines[-2], "utf-8").split(",")
+                    return int(p[0]), p[1], p[2], running_time()
+                except:
+                    display.show(Image.NO)
+        else:
+            sleep(5)
 
 def send(cmd):
     uart.write(cmd + "\n")
 
-last_d = None
-last_t = None
+# 튜닝
+JUMP_ETA, COMBO_ETA, SLIDE_ETA, DOUBLE_ETA = 350, 500, 200, 250
+
+last_d = last_t = last_kind = None
+acted = doubled = False
+first = True
 
 while True:
-    d, kind, pstate, now = wait_state()
+    d, kind, p, now = wait_state()
+    if first:
+        display.show(Image.YES)
+        first = False
 
-    if last_d is not None and now != last_t:
-        speed = (last_d - d) / (now - last_t)   # 픽셀/ms
-        if speed > 0:
-            eta = d / speed                       # 앞으로 부딪히기까지 ms
+    # 새 장애물: 상태 리셋
+    if kind != last_kind or (last_d is not None and d > last_d + 80):
+        last_d, last_t, last_kind = d, now, kind
+        acted = doubled = False
+        continue
 
-            if eta < 400:
-                if kind == "gate":
-                    send("slide")
-                else:
-                    send("jump")
+    if last_d is None or now == last_t:
+        last_d, last_t = d, now
+        continue
 
-            # 공중에 있고 combo면 바로 한 번 더 점프
-            if kind == "combo" and pstate == "J" and eta < 250:
-                send("double")
+    speed = (last_d - d) / (now - last_t)
+    last_d, last_t = d, now
+    if not (0 < speed < 2.0):
+        continue
+    eta = d / speed
 
-    last_d = d
-    last_t = now
+    if not acted:
+        if kind == "gate" and eta < SLIDE_ETA:
+            send("slide"); display.show(Image.ARROW_S); acted = True
+        elif kind == "tall" and eta < JUMP_ETA:
+            send("jump"); display.show(Image.ARROW_N); acted = True
+        elif kind == "combo" and eta < COMBO_ETA:
+            send("jump"); display.show(Image.ARROW_N); acted = True
+
+    if kind == "combo" and p == "J" and not doubled and eta < DOUBLE_ETA:
+        send("double"); display.show(Image.ARROW_N); doubled = True

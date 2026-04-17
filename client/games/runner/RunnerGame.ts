@@ -27,8 +27,6 @@ export class RunnerGame extends GameEngine {
   private timeSinceObstacle = 0;
   private timeSinceBroadcast = 0;
   private rng = createRng(12345);
-  private passFlash = 0;
-  private passedIds = new WeakSet<Obstacle>();
   private sendSerial?: (text: string) => void;
 
   constructor(canvas: HTMLCanvasElement, input: InputManager, callbacks: GameCallbacks) {
@@ -47,8 +45,6 @@ export class RunnerGame extends GameEngine {
     this.timeSinceObstacle = 0;
     this.timeSinceBroadcast = 0;
     this.rng = createRng(12345);
-    this.passFlash = 0;
-    this.passedIds = new WeakSet();
   }
 
   protected update(dt: number): void {
@@ -67,7 +63,6 @@ export class RunnerGame extends GameEngine {
 
     this.player.update(dt);
     this.background.update(dt, this.speed);
-    this.passFlash = Math.max(0, this.passFlash - dt);
 
     // 장애물 스폰 (시간 + 최소 간격 양쪽 조건)
     this.timeSinceObstacle += dt;
@@ -77,9 +72,8 @@ export class RunnerGame extends GameEngine {
       this.timeSinceObstacle = 0;
     }
 
-    // 장애물 업데이트 + 충돌 + 통과 감지
+    // 장애물 업데이트 + 충돌
     const playerBounds = this.player.getBounds();
-    const playerRearX = C.PLAYER_X;
     for (const obs of this.obstacles) {
       obs.update(dt, this.speed);
       const shrink = obs.type === 'gate' ? 1.0 : 0.8;
@@ -89,11 +83,6 @@ export class RunnerGame extends GameEngine {
           this.gameOver();
           return;
         }
-      }
-      // 통과 성공 감지 (장애물이 플레이어 뒤로 완전히 지나감)
-      if (!this.passedIds.has(obs) && obs.x + obs.width < playerRearX) {
-        this.passedIds.add(obs);
-        this.passFlash = 0.15;
       }
     }
     this.obstacles = this.obstacles.filter(o => !o.isOffScreen());
@@ -114,12 +103,6 @@ export class RunnerGame extends GameEngine {
 
     for (const obs of this.obstacles) obs.render(ctx);
     this.player.render(ctx);
-
-    // 통과 성공 플래시 (초록빛)
-    if (this.passFlash > 0) {
-      ctx.fillStyle = `rgba(74, 255, 158, ${this.passFlash * 0.8})`;
-      ctx.fillRect(0, 0, C.CANVAS_WIDTH, C.CANVAS_HEIGHT);
-    }
 
     // HUD 좌상단: 점수 + 속도
     ctx.fillStyle = '#eee';

@@ -10,6 +10,8 @@ type EventKey = keyof EventMap;
 export class WebSerialManager {
   private port: SerialPort | null = null;
   private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+  private writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
+  private encoder = new TextEncoder();
   private buffer = '';
   private listeners = new Map<EventKey, Set<Function>>();
   private running = false;
@@ -85,6 +87,13 @@ export class WebSerialManager {
     await this.port.open({ baudRate });
     this.running = true;
     this.buffer = '';
+    if (this.port.writable) {
+      try {
+        this.writer = this.port.writable.getWriter();
+      } catch {
+        this.writer = null;
+      }
+    }
     this.emit('connect');
     this.readLoop();
   }
@@ -97,11 +106,23 @@ export class WebSerialManager {
     } catch {}
     this.reader = null;
     try {
+      this.writer?.releaseLock();
+    } catch {}
+    this.writer = null;
+    try {
       await this.port?.close();
     } catch {}
     this.port = null;
     this.buffer = '';
     this.emit('disconnect');
+  }
+
+  /** 텍스트 한 줄을 micro:bit로 송신 (줄바꿈 포함 안 되어 있으면 호출자가 붙여야 함) */
+  send(text: string): void {
+    if (!this.writer) return;
+    try {
+      this.writer.write(this.encoder.encode(text));
+    } catch {}
   }
 
   isConnected(): boolean {
@@ -135,6 +156,8 @@ export class WebSerialManager {
     // 연결 끊김 처리
     const wasRunning = this.running;
     this.running = false;
+    try { this.writer?.releaseLock(); } catch {}
+    this.writer = null;
     try { await this.port?.close(); } catch {}
     this.port = null;
     this.emit('disconnect');

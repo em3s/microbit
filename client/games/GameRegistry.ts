@@ -17,7 +17,7 @@ interface GameDef {
 
 const ALL_GAMES: Record<string, GameDef> = {
   runner: {
-    enabled: false,
+    enabled: true,
     name: '러너',
     create: (canvas, input, callbacks) => new RunnerGame(canvas, input, callbacks),
     commands: {

@@ -62,6 +62,7 @@ export function GamePage() {
         setGameOver(true);
         gameOverRef.current = true;
       },
+      sendSerial: (text: string) => manager?.send(text),
     }, enableKeyboard);
 
     if (result) {

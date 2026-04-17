@@ -1,5 +1,6 @@
 export interface GameCallbacks {
   onGameOver: (score: number) => void;
+  sendSerial?: (text: string) => void;
 }
 
 export abstract class GameEngine {

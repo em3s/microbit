@@ -19,10 +19,16 @@ export const SPEED_INCREASE_RATE = 3; // px/s per second
 
 // 장애물 스폰
 export const SPAWN_INTERVAL_START = 1.5; // 초
-export const SPAWN_INTERVAL_MIN = 0.6;
-export const SPAWN_RAMP_DURATION = 120; // 초에 걸쳐 감소
-export const COMBO_UNLOCK_TIME = 3; // 초 후 콤보(더블점프) 장애물 등장
-export const GATE_UNLOCK_TIME = 10; // 초 후 게이트(슬라이드) 장애물 등장
+export const SPAWN_INTERVAL_MIN = 0.55;
+export const SPAWN_RAMP_DURATION = 5; // 초에 걸쳐 감소 — 숏폼 템포
+export const COMBO_UNLOCK_TIME = 2; // 초 후 콤보(더블점프) 장애물 등장
+export const GATE_UNLOCK_TIME = 4; // 초 후 게이트(슬라이드) 장애물 등장
+
+// 장애물 간 최소 간격 (px) — 더블점프/연속 점프 가능하도록 보장
+export const OBSTACLE_SPACING_MIN_PX = 400;
+
+// 상태 송신 주기 (Hz) — micro:bit 자동화용
+export const STATE_BROADCAST_HZ = 20;
 
 // 장애물 크기
 export const OBSTACLE_TALL_HEIGHT = 60;

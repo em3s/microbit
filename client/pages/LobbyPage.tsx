@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { GAME_REGISTRY, type GameCategory } from '../games/GameRegistry';
 import { useSerial } from '../hooks/useSerial';
 import { WebSerialManager } from '../serial/WebSerialManager';
-import { isTeacherMode, tryEnableTeacherMode, disableTeacherMode } from '../api/teacher';
+import { isTeacherMode, disableTeacherMode } from '../api/teacher';
+import { TeacherKeypad } from '../components/TeacherKeypad';
 
 const GAME_DESCRIPTIONS: Record<string, string> = {
   runner: '장애물을 피해 최대한 오래 달리세요',
@@ -33,6 +34,7 @@ export function LobbyPage() {
   const [gameId, setGameId] = useState(() => Object.keys(GAME_REGISTRY)[0] || 'dodge');
   const [inputMode, setInputMode] = useState<'microbit' | 'keyboard'>('microbit');
   const [teacher, setTeacher] = useState(() => isTeacherMode());
+  const [keypadOpen, setKeypadOpen] = useState(false);
   useEffect(() => {
     if (!playerName) navigate('/');
   }, [playerName, navigate]);
@@ -58,13 +60,7 @@ export function LobbyPage() {
       }
       return;
     }
-    const pw = prompt('선생님 비번');
-    if (pw == null) return;
-    if (tryEnableTeacherMode(pw)) {
-      setTeacher(true);
-    } else {
-      alert('비번이 틀렸어요');
-    }
+    setKeypadOpen(true);
   };
 
   // 카테고리별 그룹화
@@ -215,6 +211,16 @@ export function LobbyPage() {
       >
         시작
       </button>
+
+      {keypadOpen && (
+        <TeacherKeypad
+          onSuccess={() => {
+            setTeacher(true);
+            setKeypadOpen(false);
+          }}
+          onCancel={() => setKeypadOpen(false)}
+        />
+      )}
     </div>
   );
 }

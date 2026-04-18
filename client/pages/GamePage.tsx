@@ -117,19 +117,15 @@ export function GamePage() {
     startGameRef.current();
   }, [searchParams]);
 
-  // 업앤다운: 범위 커스터마이즈
-  const [udMin, setUdMin] = useState(() => {
-    const m = parseInt(searchParams.get('min') || '1');
-    return isNaN(m) ? 1 : m;
-  });
+  // 업앤다운: 끝값만 커스터마이즈 (시작은 항상 1)
   const [udMax, setUdMax] = useState(() => {
     const m = parseInt(searchParams.get('max') || '100');
     return isNaN(m) ? 100 : m;
   });
-  const applyUpdownRange = useCallback((min: number, max: number) => {
-    if (!Number.isFinite(min) || !Number.isFinite(max) || min >= max) return;
+  const applyUpdownMax = useCallback((max: number) => {
+    if (!Number.isFinite(max) || max <= 1) return;
     const params = new URLSearchParams(searchParams);
-    params.set('min', String(min));
+    params.set('min', '1');
     params.set('max', String(max));
     window.history.replaceState(null, '', `/play?${params}`);
     startGameRef.current();
@@ -177,40 +173,29 @@ export function GamePage() {
           </button>
         </>}
         {gameId === 'updown' && <>
-          <input
-            type="number"
-            value={udMin}
-            onChange={e => setUdMin(parseInt(e.target.value || '0'))}
-            onBlur={() => applyUpdownRange(udMin, udMax)}
-            onKeyDown={e => { if (e.key === 'Enter') applyUpdownRange(udMin, udMax); }}
-            style={{
-              padding: '4px 6px', width: 70, borderRadius: 6, border: '1px solid #555',
-              background: '#2a2a4a', color: '#c89aff', fontSize: 14, textAlign: 'center',
-              outline: 'none',
-            }}
-          />
-          <span style={{ color: '#666', fontSize: 14 }}>~</span>
+          <span style={{ color: '#888', fontSize: 16 }}>1 ~</span>
           <input
             type="number"
             value={udMax}
             onChange={e => setUdMax(parseInt(e.target.value || '0'))}
-            onBlur={() => applyUpdownRange(udMin, udMax)}
-            onKeyDown={e => { if (e.key === 'Enter') applyUpdownRange(udMin, udMax); }}
+            onBlur={() => applyUpdownMax(udMax)}
+            onKeyDown={e => { if (e.key === 'Enter') applyUpdownMax(udMax); }}
             style={{
-              padding: '4px 6px', width: 70, borderRadius: 6, border: '1px solid #555',
-              background: '#2a2a4a', color: '#c89aff', fontSize: 14, textAlign: 'center',
-              outline: 'none',
+              padding: '6px 10px', width: 90, borderRadius: 8, border: '1px solid #555',
+              background: '#2a2a4a', color: '#c89aff', fontSize: 18, fontWeight: 'bold',
+              textAlign: 'center', outline: 'none',
             }}
           />
           <button
-            onClick={() => applyUpdownRange(udMin, udMax)}
+            onClick={() => applyUpdownMax(udMax)}
+            title="다시 시작"
             style={{
-              padding: '6px 16px', borderRadius: 6, border: 'none',
+              padding: '6px 12px', borderRadius: 8, border: 'none',
               background: '#ff4a6a', color: '#fff', cursor: 'pointer',
-              fontSize: 13, fontWeight: 'bold',
+              fontSize: 16, fontWeight: 'bold',
             }}
           >
-            다시 시작
+            ↻
           </button>
         </>}
         <span style={{ color: '#888', fontSize: 14 }}>{playerName}</span>

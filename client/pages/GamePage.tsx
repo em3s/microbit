@@ -24,7 +24,7 @@ const STANDALONE_GAMES = new Set(['hanoi', 'updown']);
 
 export function GamePage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const playerName = localStorage.getItem('playerName');
   const playerEmail = localStorage.getItem('playerEmail') || '';
 
@@ -110,12 +110,11 @@ export function GamePage() {
 
   const changeHanoiLevel = useCallback((lv: number) => {
     setHanoiLevel(lv);
-    // URL을 동기적으로 업데이트 (HanoiGame 생성자가 window.location.search를 읽음)
     const params = new URLSearchParams(searchParams);
     params.set('level', String(lv));
-    window.history.replaceState(null, '', `/play?${params}`);
+    setSearchParams(params, { replace: true });
     startGameRef.current();
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
 
   // 업앤다운: 끝값만 커스터마이즈 (시작은 항상 1)
   const [udMax, setUdMax] = useState(() => {
@@ -127,9 +126,9 @@ export function GamePage() {
     const params = new URLSearchParams(searchParams);
     params.set('min', '1');
     params.set('max', String(max));
-    window.history.replaceState(null, '', `/play?${params}`);
+    setSearchParams(params, { replace: true });
     startGameRef.current();
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
 
   // 알고리즘 게임: 자동 시작
   const autoStarted = useRef(false);

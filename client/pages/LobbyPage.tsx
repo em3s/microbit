@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GAME_REGISTRY, type GameCategory } from '../games/GameRegistry';
 import { useSerial } from '../hooks/useSerial';
 import { WebSerialManager } from '../serial/WebSerialManager';
+import { isTeacherMode, tryEnableTeacherMode, disableTeacherMode } from '../api/teacher';
 
 const GAME_DESCRIPTIONS: Record<string, string> = {
   runner: '장애물을 피해 최대한 오래 달리세요',
@@ -31,6 +32,7 @@ export function LobbyPage() {
 
   const [gameId, setGameId] = useState(() => Object.keys(GAME_REGISTRY)[0] || 'dodge');
   const [inputMode, setInputMode] = useState<'microbit' | 'keyboard'>('microbit');
+  const [teacher, setTeacher] = useState(() => isTeacherMode());
   useEffect(() => {
     if (!playerName) navigate('/');
   }, [playerName, navigate]);
@@ -46,6 +48,23 @@ export function LobbyPage() {
     localStorage.removeItem('playerEmail');
     localStorage.removeItem('playerPicture');
     navigate('/');
+  };
+
+  const handleTeacherToggle = () => {
+    if (teacher) {
+      if (confirm('선생님 모드를 끌까요?')) {
+        disableTeacherMode();
+        setTeacher(false);
+      }
+      return;
+    }
+    const pw = prompt('선생님 비번');
+    if (pw == null) return;
+    if (tryEnableTeacherMode(pw)) {
+      setTeacher(true);
+    } else {
+      alert('비번이 틀렸어요');
+    }
   };
 
   // 카테고리별 그룹화
@@ -78,6 +97,19 @@ export function LobbyPage() {
           background: 'transparent', color: '#888', cursor: 'pointer', fontSize: 12, marginLeft: 8,
         }}>
           로그아웃
+        </button>
+        <button
+          onClick={handleTeacherToggle}
+          title={teacher ? '선생님 모드 끄기' : '선생님 모드'}
+          style={{
+            padding: '4px 10px', borderRadius: 6,
+            border: '1px solid ' + (teacher ? '#ffd700' : '#444'),
+            background: teacher ? '#ffd70015' : 'transparent',
+            color: teacher ? '#ffd700' : '#555',
+            cursor: 'pointer', fontSize: 12,
+          }}
+        >
+          {teacher ? '👩‍🏫 선생님' : '⚙️'}
         </button>
       </div>
 

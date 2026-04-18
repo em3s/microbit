@@ -3,6 +3,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSerial } from '../hooks/useSerial';
 import { createGame, GAME_REGISTRY } from '../games/GameRegistry';
 import { GameOverModal } from '../components/GameOverModal';
+import { PinKeypad } from '../components/PinKeypad';
+import { hasGameAccess, verifyAndGrantGameAccess } from '../api/access';
 import type { GameEngine } from '../engine/GameEngine';
 import type { InputManager } from '../engine/InputManager';
 
@@ -42,6 +44,7 @@ export function GamePage() {
   const [gameOver, setGameOver] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [started, setStarted] = useState(false);
+  const [accessGranted, setAccessGranted] = useState(() => hasGameAccess());
   const gameOverRef = useRef(false);
   const startGameRef = useRef<() => void>(() => {});
 
@@ -130,14 +133,14 @@ export function GamePage() {
     startGameRef.current();
   }, [searchParams, setSearchParams]);
 
-  // 알고리즘 게임: 자동 시작
+  // 알고리즘 게임: 접속 허가 후 자동 시작
   const autoStarted = useRef(false);
   useEffect(() => {
-    if (STANDALONE_GAMES.has(gameId) && !autoStarted.current && canvasRef.current) {
+    if (accessGranted && STANDALONE_GAMES.has(gameId) && !autoStarted.current && canvasRef.current) {
       autoStarted.current = true;
       startGameRef.current();
     }
-  }, [gameId]);
+  }, [gameId, accessGranted]);
 
   const gameDef = GAME_REGISTRY[gameId];
 
@@ -279,6 +282,17 @@ export function GamePage() {
           <span style={{ fontSize: 13, color: '#ffa04a' }}>⌨️ </span>
           <span style={{ fontSize: 13, color: '#ccc' }}>{KEYBOARD_HINTS[gameId]}</span>
         </div>
+      )}
+
+      {!accessGranted && (
+        <PinKeypad
+          title="접속 비번"
+          subtitle="선생님께 받은 4자리 숫자"
+          verify={verifyAndGrantGameAccess}
+          onSuccess={() => setAccessGranted(true)}
+          onCancel={() => navigate('/lobby')}
+          cancelLabel="나가기"
+        />
       )}
     </div>
   );

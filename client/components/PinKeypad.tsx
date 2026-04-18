@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { tryEnableTeacherMode } from '../api/teacher';
 
 interface Props {
+  title?: string;
+  subtitle?: string;
+  verify: (input: string) => Promise<boolean>;
   onSuccess: () => void;
   onCancel: () => void;
+  cancelLabel?: string;
 }
 
 const KEY_STYLE: React.CSSProperties = {
@@ -12,7 +15,14 @@ const KEY_STYLE: React.CSSProperties = {
   cursor: 'pointer', minWidth: 64, transition: 'background 0.1s',
 };
 
-export function TeacherKeypad({ onSuccess, onCancel }: Props) {
+export function PinKeypad({
+  title = '비번',
+  subtitle = '4자리 숫자',
+  verify,
+  onSuccess,
+  onCancel,
+  cancelLabel = '취소',
+}: Props) {
   const [input, setInput] = useState('');
   const [shake, setShake] = useState(false);
 
@@ -21,7 +31,7 @@ export function TeacherKeypad({ onSuccess, onCancel }: Props) {
     const next = input + d;
     setInput(next);
     if (next.length === 4) {
-      const ok = await tryEnableTeacherMode(next);
+      const ok = await verify(next);
       if (ok) {
         onSuccess();
       } else {
@@ -53,10 +63,9 @@ export function TeacherKeypad({ onSuccess, onCancel }: Props) {
           transition: 'transform 0.08s',
         }}
       >
-        <h3 style={{ margin: 0, color: '#eee' }}>선생님 비번</h3>
-        <p style={{ color: '#888', fontSize: 12, marginTop: 6 }}>4자리 숫자</p>
+        <h3 style={{ margin: 0, color: '#eee' }}>{title}</h3>
+        <p style={{ color: '#888', fontSize: 12, marginTop: 6 }}>{subtitle}</p>
 
-        {/* 입력 도트 */}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', margin: '20px 0 16px' }}>
           {[0, 1, 2, 3].map(i => {
             const filled = i < input.length;
@@ -77,7 +86,6 @@ export function TeacherKeypad({ onSuccess, onCancel }: Props) {
           })}
         </div>
 
-        {/* 키패드 */}
         <div style={{
           display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8,
           marginTop: 16,
@@ -95,9 +103,9 @@ export function TeacherKeypad({ onSuccess, onCancel }: Props) {
           ))}
           <button
             onClick={onCancel}
-            style={{ ...KEY_STYLE, background: '#3a2a3a', fontSize: 18, color: '#aaa' }}
+            style={{ ...KEY_STYLE, background: '#3a2a3a', fontSize: 16, color: '#aaa' }}
           >
-            취소
+            {cancelLabel}
           </button>
           <button
             onClick={() => press('0')}

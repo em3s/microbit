@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { GAME_REGISTRY, type GameCategory } from '../games/GameRegistry';
 import { useSerial } from '../hooks/useSerial';
 import { WebSerialManager } from '../serial/WebSerialManager';
-import { isTeacherMode, disableTeacherMode } from '../api/teacher';
-import { TeacherKeypad } from '../components/TeacherKeypad';
+import { isTeacherMode, tryEnableTeacherMode, disableTeacherMode } from '../api/teacher';
+import { getGameCodeForTeacher, revokeGameAccess } from '../api/access';
+import { PinKeypad } from '../components/PinKeypad';
 
 const GAME_DESCRIPTIONS: Record<string, string> = {
   runner: '장애물을 피해 최대한 오래 달리세요',
@@ -35,6 +36,7 @@ export function LobbyPage() {
   const [inputMode, setInputMode] = useState<'microbit' | 'keyboard'>('microbit');
   const [teacher, setTeacher] = useState(() => isTeacherMode());
   const [keypadOpen, setKeypadOpen] = useState(false);
+  const [showGameCode, setShowGameCode] = useState(false);
   useEffect(() => {
     if (!playerName) navigate('/');
   }, [playerName, navigate]);
@@ -57,10 +59,17 @@ export function LobbyPage() {
       if (confirm('선생님 모드를 끌까요?')) {
         disableTeacherMode();
         setTeacher(false);
+        setShowGameCode(false);
       }
       return;
     }
     setKeypadOpen(true);
+  };
+
+  const handleResetGameAccess = () => {
+    if (confirm('이 기기의 접속 허가를 초기화할까요? (다음 게임 진입 시 비번 재입력)')) {
+      revokeGameAccess();
+    }
   };
 
   // 카테고리별 그룹화
@@ -108,6 +117,42 @@ export function LobbyPage() {
           {teacher ? '👩‍🏫 선생님' : '⚙️'}
         </button>
       </div>
+
+      {/* 교사 전용: 접속 비번 표시 */}
+      {teacher && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: '#ffd70010', border: '1px solid #ffd70040',
+          padding: '8px 14px', borderRadius: 10,
+        }}>
+          <span style={{ fontSize: 12, color: '#ffd700' }}>접속 비번</span>
+          <span style={{
+            fontFamily: 'monospace', fontSize: 18, fontWeight: 'bold',
+            color: '#ffd700', letterSpacing: 2, minWidth: 56, textAlign: 'center',
+          }}>
+            {showGameCode ? getGameCodeForTeacher() : '●●●●'}
+          </span>
+          <button
+            onClick={() => setShowGameCode(v => !v)}
+            style={{
+              padding: '2px 10px', borderRadius: 6, border: '1px solid #ffd70060',
+              background: 'transparent', color: '#ffd700', cursor: 'pointer', fontSize: 11,
+            }}
+          >
+            {showGameCode ? '숨기기' : '보기'}
+          </button>
+          <button
+            onClick={handleResetGameAccess}
+            title="이 기기의 접속 허가 초기화"
+            style={{
+              padding: '2px 8px', borderRadius: 6, border: '1px solid #555',
+              background: 'transparent', color: '#888', cursor: 'pointer', fontSize: 11,
+            }}
+          >
+            초기화
+          </button>
+        </div>
+      )}
 
       {/* 게임 선택 — 카테고리별 그룹 */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22 }}>
@@ -213,7 +258,10 @@ export function LobbyPage() {
       </button>
 
       {keypadOpen && (
-        <TeacherKeypad
+        <PinKeypad
+          title="선생님 비번"
+          subtitle="4자리 숫자"
+          verify={tryEnableTeacherMode}
           onSuccess={() => {
             setTeacher(true);
             setKeypadOpen(false);

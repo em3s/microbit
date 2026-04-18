@@ -320,7 +320,7 @@ export class UpDownGame extends GameEngine {
 
     ctx.fillStyle = '#888';
     ctx.font = '12px monospace';
-    ctx.fillText('Enter 또는 Space 로 새 게임', W / 2, cy + 92);
+    ctx.fillText('Enter 또는 Space 로 다시 시작', W / 2, cy + 92);
   }
 
   private recordScore(): void {

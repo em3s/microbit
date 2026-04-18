@@ -208,7 +208,7 @@ export function GamePage() {
               border: 'none', background: '#4aff9e', color: '#1a1a2e',
               cursor: 'pointer', fontWeight: 'bold',
             }}>
-              게임 시작
+              시작
             </button>
             <p style={{ color: '#666', fontSize: 12 }}>space</p>
           </div>

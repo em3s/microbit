@@ -12,7 +12,7 @@ const GAME_DESCRIPTIONS: Record<string, string> = {
 };
 
 const CATEGORY_META: Record<GameCategory, { label: string; icon: string; color: string }> = {
-  microbit: { label: '마이크로비트 게임', icon: '🎮', color: '#4aff9e' },
+  microbit: { label: '마이크로비트', icon: '🎮', color: '#4aff9e' },
   algorithm: { label: '알고리즘', icon: '🧩', color: '#c89aff' },
 };
 
@@ -181,7 +181,7 @@ export function LobbyPage() {
           letterSpacing: 1,
         }}
       >
-        게임 시작
+        시작
       </button>
     </div>
   );

@@ -131,7 +131,7 @@ function getOrCreateSheet() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: 24 }}>
       <h1 style={{ fontSize: 48 }}>🎮</h1>
-      <h2>micro:bit Games</h2>
+      <h2>micro:bit</h2>
       <div ref={btnRef} />
 
       {/* 선생님 설정 */}

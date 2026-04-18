@@ -106,7 +106,7 @@ export class UpDownGame extends GameEngine {
     this.renderTitle(ctx);
     this.renderInputBox(ctx);
     this.renderHint(ctx);
-    this.renderRangeBar(ctx);
+    if (this.teacher) this.renderRangeBar(ctx);
     this.renderAttempts(ctx);
     this.renderHistory(ctx);
     this.renderKeyboardHint(ctx);
@@ -240,7 +240,7 @@ export class UpDownGame extends GameEngine {
   }
 
   private renderAttempts(ctx: CanvasRenderingContext2D): void {
-    const y = 340;
+    const y = this.teacher ? 340 : 280;
     ctx.fillStyle = '#eee';
     ctx.font = 'bold 18px monospace';
     ctx.textAlign = 'center';
@@ -258,10 +258,10 @@ export class UpDownGame extends GameEngine {
 
   // 히스토리: 세로 리스트, 입력값 + 결과 명확히
   private renderHistory(ctx: CanvasRenderingContext2D): void {
-    const startY = 380;
+    const startY = this.teacher ? 380 : 320;
     const rowH = 22;
     const cx = C.CANVAS_WIDTH / 2;
-    const maxRows = 6;
+    const maxRows = this.teacher ? 6 : 9;
 
     ctx.font = '11px monospace';
     ctx.fillStyle = '#666';

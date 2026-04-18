@@ -44,7 +44,7 @@ export function GamePage() {
   const [gameOver, setGameOver] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [started, setStarted] = useState(false);
-  const [accessGranted, setAccessGranted] = useState(() => hasGameAccess());
+  const [accessGranted, setAccessGranted] = useState(() => hasGameAccess(gameId));
   const gameOverRef = useRef(false);
   const startGameRef = useRef<() => void>(() => {});
 
@@ -286,9 +286,9 @@ export function GamePage() {
 
       {!accessGranted && (
         <PinKeypad
-          title="접속 비번"
+          title={`${gameDef?.name ?? ''} 접속 비번`}
           subtitle="선생님께 받은 4자리 숫자"
-          verify={verifyAndGrantGameAccess}
+          verify={(input) => verifyAndGrantGameAccess(gameId, input)}
           onSuccess={() => setAccessGranted(true)}
           onCancel={() => navigate('/lobby')}
           cancelLabel="나가기"

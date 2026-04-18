@@ -4,7 +4,7 @@ import { GAME_REGISTRY, type GameCategory } from '../games/GameRegistry';
 import { useSerial } from '../hooks/useSerial';
 import { WebSerialManager } from '../serial/WebSerialManager';
 import { isTeacherMode, tryEnableTeacherMode, disableTeacherMode } from '../api/teacher';
-import { getGameCodeForTeacher, revokeGameAccess } from '../api/access';
+import { getGameCodeForTeacher, revokeAllGameAccess } from '../api/access';
 import { PinKeypad } from '../components/PinKeypad';
 
 const GAME_DESCRIPTIONS: Record<string, string> = {
@@ -36,7 +36,7 @@ export function LobbyPage() {
   const [inputMode, setInputMode] = useState<'microbit' | 'keyboard'>('microbit');
   const [teacher, setTeacher] = useState(() => isTeacherMode());
   const [keypadOpen, setKeypadOpen] = useState(false);
-  const [showGameCode, setShowGameCode] = useState(false);
+  const [revealedCodes, setRevealedCodes] = useState<Set<string>>(new Set());
   useEffect(() => {
     if (!playerName) navigate('/');
   }, [playerName, navigate]);
@@ -59,16 +59,25 @@ export function LobbyPage() {
       if (confirm('선생님 모드를 끌까요?')) {
         disableTeacherMode();
         setTeacher(false);
-        setShowGameCode(false);
+        setRevealedCodes(new Set());
       }
       return;
     }
     setKeypadOpen(true);
   };
 
+  const toggleReveal = (id: string) => {
+    setRevealedCodes(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const handleResetGameAccess = () => {
-    if (confirm('이 기기의 접속 허가를 초기화할까요? (다음 게임 진입 시 비번 재입력)')) {
-      revokeGameAccess();
+    if (confirm('이 기기의 모든 게임 접속 허가를 초기화할까요?')) {
+      revokeAllGameAccess();
     }
   };
 
@@ -118,39 +127,50 @@ export function LobbyPage() {
         </button>
       </div>
 
-      {/* 교사 전용: 접속 비번 표시 */}
+      {/* 교사 전용: 게임별 접속 비번 */}
       {teacher && (
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
+          display: 'flex', flexDirection: 'column', gap: 8,
           background: '#ffd70010', border: '1px solid #ffd70040',
-          padding: '8px 14px', borderRadius: 10,
+          padding: '12px 16px', borderRadius: 10, minWidth: 320,
         }}>
-          <span style={{ fontSize: 12, color: '#ffd700' }}>접속 비번</span>
-          <span style={{
-            fontFamily: 'monospace', fontSize: 18, fontWeight: 'bold',
-            color: '#ffd700', letterSpacing: 2, minWidth: 56, textAlign: 'center',
-          }}>
-            {showGameCode ? getGameCodeForTeacher() : '●●●●'}
-          </span>
-          <button
-            onClick={() => setShowGameCode(v => !v)}
-            style={{
-              padding: '2px 10px', borderRadius: 6, border: '1px solid #ffd70060',
-              background: 'transparent', color: '#ffd700', cursor: 'pointer', fontSize: 11,
-            }}
-          >
-            {showGameCode ? '숨기기' : '보기'}
-          </button>
-          <button
-            onClick={handleResetGameAccess}
-            title="이 기기의 접속 허가 초기화"
-            style={{
-              padding: '2px 8px', borderRadius: 6, border: '1px solid #555',
-              background: 'transparent', color: '#888', cursor: 'pointer', fontSize: 11,
-            }}
-          >
-            초기화
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 12, color: '#ffd700' }}>게임별 접속 비번</span>
+            <button
+              onClick={handleResetGameAccess}
+              title="이 기기의 모든 접속 허가 초기화"
+              style={{
+                padding: '2px 8px', borderRadius: 6, border: '1px solid #555',
+                background: 'transparent', color: '#888', cursor: 'pointer', fontSize: 11,
+              }}
+            >
+              전체 초기화
+            </button>
+          </div>
+          {Object.entries(GAME_REGISTRY).map(([id, def]) => {
+            const revealed = revealedCodes.has(id);
+            const code = getGameCodeForTeacher(id);
+            return (
+              <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 13, color: '#ccc', minWidth: 80 }}>{def.name}</span>
+                <span style={{
+                  fontFamily: 'monospace', fontSize: 18, fontWeight: 'bold',
+                  color: '#ffd700', letterSpacing: 2, minWidth: 64, textAlign: 'center',
+                }}>
+                  {revealed ? (code ?? '—') : '●●●●'}
+                </span>
+                <button
+                  onClick={() => toggleReveal(id)}
+                  style={{
+                    padding: '2px 10px', borderRadius: 6, border: '1px solid #ffd70060',
+                    background: 'transparent', color: '#ffd700', cursor: 'pointer', fontSize: 11,
+                  }}
+                >
+                  {revealed ? '숨기기' : '보기'}
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
 

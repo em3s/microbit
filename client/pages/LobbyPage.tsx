@@ -11,7 +11,7 @@ const GAME_DESCRIPTIONS: Record<string, string> = {
   runner: '장애물을 피해 최대한 오래 달리세요',
   dodge: '위에서 떨어지는 블록을 피하세요',
   hanoi: '모든 디스크를 오른쪽 기둥으로 옮기세요',
-  updown: '컴퓨터가 고른 숫자 맞추기 (이분탐색)',
+  updown: '숫자 맞추기',
 };
 
 const CATEGORY_META: Record<GameCategory, { label: string; icon: string; color: string }> = {

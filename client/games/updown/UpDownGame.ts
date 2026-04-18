@@ -147,7 +147,7 @@ export class UpDownGame extends GameEngine {
 
     ctx.fillStyle = '#888';
     ctx.font = '13px monospace';
-    ctx.fillText(`${this.minV} ~ ${this.maxV} 중 숫자를 맞춰보세요`, C.CANVAS_WIDTH / 2, 60);
+    ctx.fillText('숫자 맞추기', C.CANVAS_WIDTH / 2, 60);
   }
 
   private renderInputBox(ctx: CanvasRenderingContext2D): void {
@@ -270,7 +270,7 @@ export class UpDownGame extends GameEngine {
       ctx.fillStyle = '#888';
       ctx.font = '11px monospace';
       ctx.fillText(
-        `이분탐색 최적 log₂(${this.maxV - this.minV + 1}) ≈ ${this.optimalTries}회`,
+        `최소 시도 log₂(${this.maxV - this.minV + 1}) ≈ ${this.optimalTries}회`,
         C.CANVAS_WIDTH / 2, y + 18,
       );
     }
@@ -356,7 +356,7 @@ export class UpDownGame extends GameEngine {
     if (this.teacher) {
       const optimal = this.optimalTries;
       const ratio = this.attempts / optimal;
-      const grade = ratio <= 1 ? '🏆 완벽 (이분탐색 수준)'
+      const grade = ratio <= 1 ? '🏆 완벽 (최적)'
                   : ratio <= 1.5 ? '👍 훌륭'
                   : ratio <= 2 ? '👌 보통'
                   : '🙂 다시 도전';

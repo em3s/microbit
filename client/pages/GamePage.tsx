@@ -175,17 +175,22 @@ export function GamePage() {
         {gameId === 'updown' && <>
           <span style={{ color: '#888', fontSize: 16 }}>1 ~</span>
           <input
-            type="number"
+            type="range"
+            min={50}
+            max={1000}
+            step={50}
             value={udMax}
-            onChange={e => setUdMax(parseInt(e.target.value || '0'))}
-            onBlur={() => applyUpdownMax(udMax)}
-            onKeyDown={e => { if (e.key === 'Enter') applyUpdownMax(udMax); }}
-            style={{
-              padding: '6px 10px', width: 90, borderRadius: 8, border: '1px solid #555',
-              background: '#2a2a4a', color: '#c89aff', fontSize: 18, fontWeight: 'bold',
-              textAlign: 'center', outline: 'none',
-            }}
+            onChange={e => setUdMax(parseInt(e.target.value))}
+            onMouseUp={() => applyUpdownMax(udMax)}
+            onTouchEnd={() => applyUpdownMax(udMax)}
+            style={{ width: 160, accentColor: '#c89aff' }}
           />
+          <span style={{
+            color: '#c89aff', fontSize: 20, fontWeight: 'bold',
+            minWidth: 54, textAlign: 'center',
+          }}>
+            {udMax}
+          </span>
           <button
             onClick={() => applyUpdownMax(udMax)}
             title="다시 시작"

@@ -12,9 +12,11 @@ interface Guess {
 }
 
 export class UpDownGame extends GameEngine {
+  private minV = C.DEFAULT_MIN;
+  private maxV = C.DEFAULT_MAX;
   private target = 0;
-  private minR = C.MIN_VALUE;
-  private maxR = C.MAX_VALUE;
+  private minR = C.DEFAULT_MIN;
+  private maxR = C.DEFAULT_MAX;
   private input = '';
   private hint: Hint = null;
   private hintFlash = 0;
@@ -35,10 +37,32 @@ export class UpDownGame extends GameEngine {
     window.removeEventListener('keydown', this.onKey);
   }
 
+  private parseRangeFromURL(): void {
+    const params = new URLSearchParams(window.location.search);
+    const min = parseInt(params.get('min') || '');
+    const max = parseInt(params.get('max') || '');
+    if (Number.isFinite(min) && Number.isFinite(max) && min < max) {
+      this.minV = Math.max(C.RANGE_LIMIT_MIN, min);
+      this.maxV = Math.min(C.RANGE_LIMIT_MAX, max);
+    } else {
+      this.minV = C.DEFAULT_MIN;
+      this.maxV = C.DEFAULT_MAX;
+    }
+  }
+
+  private get optimalTries(): number {
+    return Math.ceil(Math.log2(this.maxV - this.minV + 1));
+  }
+
+  private get maxDigits(): number {
+    return String(this.maxV).length;
+  }
+
   protected init(): void {
-    this.target = C.MIN_VALUE + Math.floor(Math.random() * (C.MAX_VALUE - C.MIN_VALUE + 1));
-    this.minR = C.MIN_VALUE;
-    this.maxR = C.MAX_VALUE;
+    this.parseRangeFromURL();
+    this.target = this.minV + Math.floor(Math.random() * (this.maxV - this.minV + 1));
+    this.minR = this.minV;
+    this.maxR = this.maxV;
     this.input = '';
     this.hint = null;
     this.hintFlash = 0;
@@ -56,7 +80,7 @@ export class UpDownGame extends GameEngine {
       }
       return;
     }
-    if (/^[0-9]$/.test(e.key) && this.input.length < 3) {
+    if (/^[0-9]$/.test(e.key) && this.input.length < this.maxDigits) {
       this.input += e.key;
       e.preventDefault();
     } else if (e.key === 'Backspace') {
@@ -71,7 +95,7 @@ export class UpDownGame extends GameEngine {
   private submit(): void {
     const n = parseInt(this.input, 10);
     this.input = '';
-    if (!Number.isFinite(n) || n < C.MIN_VALUE || n > C.MAX_VALUE) {
+    if (!Number.isFinite(n) || n < this.minV || n > this.maxV) {
       this.hint = 'invalid';
       this.hintFlash = 0.5;
       return;
@@ -123,7 +147,7 @@ export class UpDownGame extends GameEngine {
 
     ctx.fillStyle = '#888';
     ctx.font = '13px monospace';
-    ctx.fillText(`${C.MIN_VALUE} ~ ${C.MAX_VALUE} 중 숫자를 맞춰보세요`, C.CANVAS_WIDTH / 2, 60);
+    ctx.fillText(`${this.minV} ~ ${this.maxV} 중 숫자를 맞춰보세요`, C.CANVAS_WIDTH / 2, 60);
   }
 
   private renderInputBox(ctx: CanvasRenderingContext2D): void {
@@ -166,7 +190,7 @@ export class UpDownGame extends GameEngine {
       text = '↓  더 작은 수!';
       color = C.COLOR_DOWN;
     } else if (this.hint === 'invalid') {
-      text = `${C.MIN_VALUE}~${C.MAX_VALUE} 범위 숫자를 입력하세요`;
+      text = `${this.minV}~${this.maxV} 범위 숫자를 입력하세요`;
       color = '#ff4a6a';
     } else if (this.hint === 'correct') {
       text = '';
@@ -193,25 +217,22 @@ export class UpDownGame extends GameEngine {
     const barH = 26;
     const barX = 40;
     const barW = C.CANVAS_WIDTH - 80;
-    const range = C.MAX_VALUE - C.MIN_VALUE;
-    const pxPerUnit = barW / range;
+    const range = this.maxV - this.minV;
+    const pxPerUnit = range > 0 ? barW / range : 0;
 
-    // 전체 범위
     ctx.fillStyle = '#2e2e44';
     ctx.beginPath();
     ctx.roundRect(barX, barY, barW, barH, 13);
     ctx.fill();
 
-    // 좁혀진 구간
-    const leftX = barX + (this.minR - C.MIN_VALUE) * pxPerUnit;
-    const rightX = barX + (this.maxR - C.MIN_VALUE) * pxPerUnit;
+    const leftX = barX + (this.minR - this.minV) * pxPerUnit;
+    const rightX = barX + (this.maxR - this.minV) * pxPerUnit;
     const activeW = Math.max(2, rightX - leftX);
     ctx.fillStyle = this.won ? C.COLOR_CORRECT : C.COLOR_PRIMARY;
     ctx.beginPath();
     ctx.roundRect(leftX, barY, activeW, barH, 10);
     ctx.fill();
 
-    // 경계 숫자
     ctx.fillStyle = '#bbb';
     ctx.font = 'bold 13px monospace';
     ctx.textAlign = 'left';
@@ -219,10 +240,9 @@ export class UpDownGame extends GameEngine {
     ctx.textAlign = 'right';
     ctx.fillText(String(this.maxR), rightX, barY + barH + 16);
 
-    // 선생님 모드: 중간값(이분탐색 힌트) 화살표
-    if (this.teacher && !this.won && this.minR <= this.maxR) {
+    if (!this.won && this.minR <= this.maxR) {
       const mid = Math.floor((this.minR + this.maxR) / 2);
-      const midX = barX + (mid - C.MIN_VALUE) * pxPerUnit;
+      const midX = barX + (mid - this.minV) * pxPerUnit;
 
       ctx.fillStyle = C.COLOR_MID;
       ctx.beginPath();
@@ -250,13 +270,12 @@ export class UpDownGame extends GameEngine {
       ctx.fillStyle = '#888';
       ctx.font = '11px monospace';
       ctx.fillText(
-        `이분탐색 최적 log₂(${C.MAX_VALUE - C.MIN_VALUE + 1}) ≈ ${C.OPTIMAL_TRIES}회`,
+        `이분탐색 최적 log₂(${this.maxV - this.minV + 1}) ≈ ${this.optimalTries}회`,
         C.CANVAS_WIDTH / 2, y + 18,
       );
     }
   }
 
-  // 히스토리: 세로 리스트, 입력값 + 결과 명확히
   private renderHistory(ctx: CanvasRenderingContext2D): void {
     const startY = this.teacher ? 380 : 320;
     const rowH = 22;
@@ -278,25 +297,21 @@ export class UpDownGame extends GameEngine {
       const arrow = isCorrect ? '✓' : isHigher ? '↑' : '↓';
       const label = isCorrect ? '정답!' : isHigher ? '더 큰 수' : '더 작은 수';
 
-      // 시도 번호
       ctx.fillStyle = '#555';
       ctx.font = '11px monospace';
       ctx.textAlign = 'left';
       ctx.fillText(`#${n}`, cx - 140, y);
 
-      // 입력한 숫자 (크게)
       ctx.fillStyle = '#fff';
       ctx.font = 'bold 16px monospace';
       ctx.textAlign = 'right';
       ctx.fillText(String(g.value), cx - 50, y);
 
-      // 화살표
       ctx.fillStyle = color;
       ctx.font = 'bold 18px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(arrow, cx - 20, y);
 
-      // 답변 텍스트
       ctx.fillStyle = color;
       ctx.font = 'bold 13px monospace';
       ctx.textAlign = 'left';
@@ -339,14 +354,15 @@ export class UpDownGame extends GameEngine {
     ctx.fillText(`시도 ${this.attempts}회`, W / 2, cy + 40);
 
     if (this.teacher) {
-      const ratio = this.attempts / C.OPTIMAL_TRIES;
+      const optimal = this.optimalTries;
+      const ratio = this.attempts / optimal;
       const grade = ratio <= 1 ? '🏆 완벽 (이분탐색 수준)'
                   : ratio <= 1.5 ? '👍 훌륭'
                   : ratio <= 2 ? '👌 보통'
                   : '🙂 다시 도전';
       ctx.fillStyle = ratio <= 1 ? C.COLOR_CORRECT : '#ffa04a';
       ctx.font = '13px monospace';
-      ctx.fillText(grade + `  /  최적 ${C.OPTIMAL_TRIES}회`, W / 2, cy + 62);
+      ctx.fillText(grade + `  /  최적 ${optimal}회`, W / 2, cy + 62);
     }
 
     ctx.fillStyle = '#888';
@@ -357,6 +373,6 @@ export class UpDownGame extends GameEngine {
   private recordScore(): void {
     const name = localStorage.getItem('playerName') || '';
     const email = localStorage.getItem('playerEmail') || '';
-    submitScore(name, email, 'updown', this.attempts, 'keyboard');
+    submitScore(name, email, `updown-${this.minV}-${this.maxV}`, this.attempts, 'keyboard');
   }
 }

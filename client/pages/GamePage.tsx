@@ -117,6 +117,24 @@ export function GamePage() {
     startGameRef.current();
   }, [searchParams]);
 
+  // 업앤다운: 범위 커스터마이즈
+  const [udMin, setUdMin] = useState(() => {
+    const m = parseInt(searchParams.get('min') || '1');
+    return isNaN(m) ? 1 : m;
+  });
+  const [udMax, setUdMax] = useState(() => {
+    const m = parseInt(searchParams.get('max') || '100');
+    return isNaN(m) ? 100 : m;
+  });
+  const applyUpdownRange = useCallback((min: number, max: number) => {
+    if (!Number.isFinite(min) || !Number.isFinite(max) || min >= max) return;
+    const params = new URLSearchParams(searchParams);
+    params.set('min', String(min));
+    params.set('max', String(max));
+    window.history.replaceState(null, '', `/play?${params}`);
+    startGameRef.current();
+  }, [searchParams]);
+
   // 알고리즘 게임: 자동 시작
   const autoStarted = useRef(false);
   useEffect(() => {
@@ -156,6 +174,43 @@ export function GamePage() {
             }}
           >
             초기화
+          </button>
+        </>}
+        {gameId === 'updown' && <>
+          <input
+            type="number"
+            value={udMin}
+            onChange={e => setUdMin(parseInt(e.target.value || '0'))}
+            onBlur={() => applyUpdownRange(udMin, udMax)}
+            onKeyDown={e => { if (e.key === 'Enter') applyUpdownRange(udMin, udMax); }}
+            style={{
+              padding: '4px 6px', width: 70, borderRadius: 6, border: '1px solid #555',
+              background: '#2a2a4a', color: '#c89aff', fontSize: 14, textAlign: 'center',
+              outline: 'none',
+            }}
+          />
+          <span style={{ color: '#666', fontSize: 14 }}>~</span>
+          <input
+            type="number"
+            value={udMax}
+            onChange={e => setUdMax(parseInt(e.target.value || '0'))}
+            onBlur={() => applyUpdownRange(udMin, udMax)}
+            onKeyDown={e => { if (e.key === 'Enter') applyUpdownRange(udMin, udMax); }}
+            style={{
+              padding: '4px 6px', width: 70, borderRadius: 6, border: '1px solid #555',
+              background: '#2a2a4a', color: '#c89aff', fontSize: 14, textAlign: 'center',
+              outline: 'none',
+            }}
+          />
+          <button
+            onClick={() => applyUpdownRange(udMin, udMax)}
+            style={{
+              padding: '6px 16px', borderRadius: 6, border: 'none',
+              background: '#ff4a6a', color: '#fff', cursor: 'pointer',
+              fontSize: 13, fontWeight: 'bold',
+            }}
+          >
+            다시 시작
           </button>
         </>}
         <span style={{ color: '#888', fontSize: 14 }}>{playerName}</span>

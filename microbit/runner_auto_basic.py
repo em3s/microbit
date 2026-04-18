@@ -1,41 +1,55 @@
 from microbit import *
 
-# 러너 자동 플레이 — 기본 샘플
-# 게임이 50ms마다 보냄: "d,kind,pstate,sc,go\n"  (예: "350,tall,G,120,0")
-#
-# 거리가 150보다 가까워지면 무조건 점프 — 금방 죽어요!
-# 왜 그런지 관찰하고 직접 고쳐보세요.
+# ─── 선생님 제공 (건드리지 말 것) ───────────────────────────
+# read() → (d, kind, pstate, now, is_new)
+# act(cmd) → 현재 장애물에 아직 안 쐈으면 송신
 
 uart.init(baudrate=115200)
 display.show(Image.HEART)
 
-_buf = b""
+_ICONS = {"jump": Image.ARROW_N, "double": Image.ARROW_N, "slide": Image.ARROW_S}
+_last_d = _last_kind = None
+_fired = set()
+_first = True
 
-def wait_d():
-    global _buf
+def read():
+    global _last_d, _last_kind, _fired, _first
     while True:
-        chunk = uart.read()
-        if chunk:
-            _buf += chunk
-        if b"\n" in _buf:
-            lines = _buf.split(b"\n")
-            _buf = lines[-1]
-            if len(lines) >= 2:
-                try:
-                    return int(str(lines[-2], "utf-8").split(",")[0])
-                except:
-                    display.show(Image.NO)
-        else:
-            sleep(5)
+        line = uart.readline()
+        if not line:
+            sleep(5); continue
+        while True:
+            nxt = uart.readline()
+            if not nxt: break
+            line = nxt
+        try:
+            p = str(line, "utf-8").strip().split(",")
+            d, kind, pstate = int(p[0]), p[1], p[2]
+        except:
+            display.show(Image.NO); continue
 
-def send(cmd):
+        now = running_time()
+        if _first:
+            display.show(Image.YES); _first = False
+
+        is_new = kind != _last_kind or (_last_d is not None and d > _last_d + 80)
+        if is_new:
+            _fired = set()
+        _last_kind, _last_d = kind, d
+        return d, kind, pstate, now, is_new
+
+def act(cmd):
+    if cmd in _fired: return
+    _fired.add(cmd)
     uart.write(cmd + "\n")
+    display.show(_ICONS.get(cmd, Image.ARROW_N))
 
-display.show(Image.YES)
 
-# ─── 학생이 고치는 부분 ───
+# ─── 학생이 고치는 부분 ─────────────────────────────────────
+# 거리만 보고 점프 — 금방 죽어요.
+# 힌트: 두 번 관찰해서 속도를 구하면 eta(도달시간)를 계산할 수 있어요.
+
 while True:
-    d = wait_d()
+    d, kind, pstate, now, is_new = read()
     if d < 150:
-        send("jump")
-        display.show(Image.ARROW_N)
+        act("jump")

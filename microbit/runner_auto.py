@@ -1,75 +1,72 @@
 from microbit import *
 
-# 러너 자동 플레이
-# 게임이 50ms마다 보냄: "d,kind,pstate,sc,go\n"  (예: "350,tall,G,120,0")
-#   d      = 다음 장애물까지 거리 (픽셀)
-#   kind   = "tall" / "combo" / "gate" / "none"
-#   pstate = "G"(땅) / "J"(공중) / "D"(슬라이드중)
-#
-# LED: HEART(시작) → YES(수신) / ARROW_N(jump,double) / ARROW_S(slide) / NO(에러)
+# ─── 선생님 제공 (건드리지 말 것) ───────────────────────────
+# read() → (d, kind, pstate, now, is_new)
+#   d, kind, pstate : 게임 상태
+#   now             : 현재 시각 (ms)
+#   is_new          : True면 방금 새 장애물이 나타남 → 관찰 초기화 필요
+# act(cmd) → 현재 장애물에 아직 안 쐈으면 송신 ("jump"/"double"/"slide")
 
 uart.init(baudrate=115200)
 display.show(Image.HEART)
 
-_buf = b""
+_ICONS = {"jump": Image.ARROW_N, "double": Image.ARROW_N, "slide": Image.ARROW_S}
+_last_d = _last_kind = None
+_fired = set()
+_first = True
 
-def wait_state():
-    global _buf
+def read():
+    global _last_d, _last_kind, _fired, _first
     while True:
-        chunk = uart.read()
-        if chunk:
-            _buf += chunk
-        if b"\n" in _buf:
-            lines = _buf.split(b"\n")
-            _buf = lines[-1]
-            if len(lines) >= 2:
-                try:
-                    p = str(lines[-2], "utf-8").split(",")
-                    return int(p[0]), p[1], p[2], running_time()
-                except:
-                    display.show(Image.NO)
-        else:
-            sleep(5)
+        line = uart.readline()
+        if not line:
+            sleep(5); continue
+        while True:
+            nxt = uart.readline()
+            if not nxt: break
+            line = nxt
+        try:
+            p = str(line, "utf-8").strip().split(",")
+            d, kind, pstate = int(p[0]), p[1], p[2]
+        except:
+            display.show(Image.NO); continue
 
-def send(cmd):
+        now = running_time()
+        if _first:
+            display.show(Image.YES); _first = False
+
+        is_new = kind != _last_kind or (_last_d is not None and d > _last_d + 80)
+        if is_new:
+            _fired = set()
+        _last_kind, _last_d = kind, d
+        return d, kind, pstate, now, is_new
+
+def act(cmd):
+    if cmd in _fired: return
+    _fired.add(cmd)
     uart.write(cmd + "\n")
+    display.show(_ICONS.get(cmd, Image.ARROW_N))
 
-# 튜닝
-JUMP_ETA, COMBO_ETA, SLIDE_ETA, DOUBLE_ETA = 350, 500, 200, 250
 
-last_d = last_t = last_kind = None
-acted = doubled = False
-first = True
+# ─── 학생이 고치는 부분 ─────────────────────────────────────
+last_d = last_t = None
 
 while True:
-    d, kind, p, now = wait_state()
-    if first:
-        display.show(Image.YES)
-        first = False
+    d, kind, pstate, now, is_new = read()
 
-    # 새 장애물: 상태 리셋
-    if kind != last_kind or (last_d is not None and d > last_d + 80):
-        last_d, last_t, last_kind = d, now, kind
-        acted = doubled = False
-        continue
-
-    if last_d is None or now == last_t:
+    # 새 장애물이면 관찰 다시 시작
+    if is_new:
         last_d, last_t = d, now
         continue
 
-    speed = (last_d - d) / (now - last_t)
+    # 두 번의 관찰로 속도 계산 (거리 단위: 픽셀, 시간 단위: ms)
+    speed = (last_d - d) / (now - last_t)     # 픽셀/ms
     last_d, last_t = d, now
-    if not (0 < speed < 2.0):
-        continue
-    eta = d / speed
+    if speed <= 0: continue
 
-    if not acted:
-        if kind == "gate" and eta < SLIDE_ETA:
-            send("slide"); display.show(Image.ARROW_S); acted = True
-        elif kind == "tall" and eta < JUMP_ETA:
-            send("jump"); display.show(Image.ARROW_N); acted = True
-        elif kind == "combo" and eta < COMBO_ETA:
-            send("jump"); display.show(Image.ARROW_N); acted = True
+    eta = d / speed                           # 도달까지 남은 시간 (ms)
 
-    if kind == "combo" and p == "J" and not doubled and eta < DOUBLE_ETA:
-        send("double"); display.show(Image.ARROW_N); doubled = True
+    if kind == "gate"  and eta < 200:                     act("slide")
+    if kind == "tall"  and eta < 350:                     act("jump")
+    if kind == "combo" and eta < 500:                     act("jump")
+    if kind == "combo" and eta < 250 and pstate == "J":   act("double")

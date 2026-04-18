@@ -16,7 +16,11 @@ const CANVAS_SIZES: Record<string, { w: number; h: number }> = {
   runner: { w: 800, h: 400 },
   dodge: { w: 400, h: 500 },
   hanoi: { w: 500, h: 500 },
+  updown: { w: 500, h: 560 },
 };
+
+// 마우스/키보드 전용 게임 (micro:bit 연결 불필요, 자동 시작)
+const STANDALONE_GAMES = new Set(['hanoi', 'updown']);
 
 export function GamePage() {
   const navigate = useNavigate();
@@ -113,10 +117,10 @@ export function GamePage() {
     startGameRef.current();
   }, [searchParams]);
 
-  // 하노이: 자동 시작
+  // 알고리즘 게임: 자동 시작
   const autoStarted = useRef(false);
   useEffect(() => {
-    if (gameId === 'hanoi' && !autoStarted.current && canvasRef.current) {
+    if (STANDALONE_GAMES.has(gameId) && !autoStarted.current && canvasRef.current) {
       autoStarted.current = true;
       startGameRef.current();
     }
@@ -155,7 +159,7 @@ export function GamePage() {
           </button>
         </>}
         <span style={{ color: '#888', fontSize: 14 }}>{playerName}</span>
-        {gameId !== 'hanoi' && (
+        {!STANDALONE_GAMES.has(gameId) && (
           <span style={{ color: '#555', fontSize: 12 }}>
             {inputMode === 'mouse' ? '🖱️' : enableKeyboard ? '⌨️' : (connected ? '✓ micro:bit' : 'micro:bit')}
           </span>

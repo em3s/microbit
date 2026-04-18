@@ -5,10 +5,14 @@ import { COMMAND_COOLDOWNS as RUNNER_COOLDOWNS, KEYBOARD_MAP as RUNNER_KEYS } fr
 import { DodgeGame } from './dodge/DodgeGame';
 import { COMMAND_COOLDOWNS as DODGE_COOLDOWNS, KEYBOARD_MAP as DODGE_KEYS, ANALOG_CONFIGS as DODGE_ANALOG } from './dodge/config';
 import { HanoiGame } from './hanoi/HanoiGame';
+import { UpDownGame } from './updown/UpDownGame';
 import { WebSerialManager } from '../serial/WebSerialManager';
 
-interface GameDef {
+export type GameCategory = 'microbit' | 'algorithm';
+
+export interface GameDef {
   name: string;
+  category: GameCategory;
   enabled: boolean;
   create: (canvas: HTMLCanvasElement, input: InputManager, callbacks: GameCallbacks) => GameEngine;
   commands: Record<string, CommandConfig>;
@@ -19,6 +23,7 @@ const ALL_GAMES: Record<string, GameDef> = {
   runner: {
     enabled: true,
     name: '러너',
+    category: 'microbit',
     create: (canvas, input, callbacks) => new RunnerGame(canvas, input, callbacks),
     commands: {
       jump: { cooldownMs: RUNNER_COOLDOWNS.jump, keyboardKey: RUNNER_KEYS.jump },
@@ -29,6 +34,7 @@ const ALL_GAMES: Record<string, GameDef> = {
   dodge: {
     enabled: true,
     name: '피하기',
+    category: 'microbit',
     create: (canvas, input, callbacks) => new DodgeGame(canvas, input, callbacks),
     commands: {
       left: { cooldownMs: DODGE_COOLDOWNS.left },
@@ -40,7 +46,15 @@ const ALL_GAMES: Record<string, GameDef> = {
   hanoi: {
     enabled: true,
     name: '하노이탑',
+    category: 'algorithm',
     create: (canvas, input, callbacks) => new HanoiGame(canvas, input, callbacks),
+    commands: {},
+  },
+  updown: {
+    enabled: true,
+    name: '업앤다운',
+    category: 'algorithm',
+    create: (canvas, input, callbacks) => new UpDownGame(canvas, input, callbacks),
     commands: {},
   },
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GAME_REGISTRY } from '../games/GameRegistry';
+import { GAME_REGISTRY, type GameCategory } from '../games/GameRegistry';
 import { useSerial } from '../hooks/useSerial';
 import { WebSerialManager } from '../serial/WebSerialManager';
 
@@ -8,7 +8,18 @@ const GAME_DESCRIPTIONS: Record<string, string> = {
   runner: '장애물을 피해 최대한 오래 달리세요',
   dodge: '위에서 떨어지는 블록을 피하세요',
   hanoi: '모든 디스크를 오른쪽 기둥으로 옮기세요',
+  updown: '컴퓨터가 고른 숫자 맞추기 (이분탐색)',
 };
+
+const CATEGORY_META: Record<GameCategory, { label: string; icon: string; color: string }> = {
+  microbit: { label: '마이크로비트 게임', icon: '🎮', color: '#4aff9e' },
+  algorithm: { label: '알고리즘', icon: '🧩', color: '#c89aff' },
+};
+
+const CATEGORY_ORDER: GameCategory[] = ['microbit', 'algorithm'];
+
+// 알고리즘 계열은 마우스/키보드로만 플레이 → micro:bit 입력 선택 숨김
+const isStandaloneGame = (id: string) => GAME_REGISTRY[id]?.category === 'algorithm';
 
 export function LobbyPage() {
   const navigate = useNavigate();
@@ -25,7 +36,7 @@ export function LobbyPage() {
   }, [playerName, navigate]);
 
   const handleStart = () => {
-    const input = gameId === 'hanoi' ? 'mouse' : inputMode;
+    const input = isStandaloneGame(gameId) ? 'mouse' : inputMode;
     const params = new URLSearchParams({ game: gameId, input });
     navigate(`/play?${params}`);
   };
@@ -36,6 +47,14 @@ export function LobbyPage() {
     localStorage.removeItem('playerPicture');
     navigate('/');
   };
+
+  // 카테고리별 그룹화
+  const grouped = CATEGORY_ORDER
+    .map(cat => ({
+      cat,
+      games: Object.entries(GAME_REGISTRY).filter(([, def]) => def.category === cat),
+    }))
+    .filter(g => g.games.length > 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: 28, padding: 24 }}>
@@ -62,36 +81,49 @@ export function LobbyPage() {
         </button>
       </div>
 
-      {/* 게임 선택 */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-        <h3 style={{ color: '#666', fontSize: 12, textTransform: 'uppercase', letterSpacing: 2 }}>게임 선택</h3>
-        <div style={{ display: 'flex', gap: 12 }}>
-          {Object.entries(GAME_REGISTRY).map(([id, def]) => (
-            <button
-              key={id}
-              onClick={() => setGameId(id)}
-              style={{
-                padding: '20px 36px', borderRadius: 14, border: '2px solid',
-                borderColor: id === gameId ? '#ffd700' : '#333',
-                background: id === gameId ? '#ffd70015' : '#2a2a4a',
-                color: id === gameId ? '#ffd700' : '#aaa',
-                cursor: 'pointer', fontSize: 20, fontWeight: 'bold',
-                minWidth: 160, transition: 'all 0.15s',
-                textAlign: 'center',
-              }}
-            >
-              {def.name}
-              <br />
-              <span style={{ fontSize: 11, fontWeight: 'normal', color: '#777' }}>
-                {GAME_DESCRIPTIONS[id]}
-              </span>
-            </button>
-          ))}
-        </div>
+      {/* 게임 선택 — 카테고리별 그룹 */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22 }}>
+        {grouped.map(({ cat, games }) => {
+          const meta = CATEGORY_META[cat];
+          return (
+            <div key={cat} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <h3 style={{
+                color: meta.color, fontSize: 12, textTransform: 'uppercase', letterSpacing: 2,
+                display: 'flex', alignItems: 'center', gap: 6, margin: 0,
+              }}>
+                <span style={{ fontSize: 14 }}>{meta.icon}</span>
+                {meta.label}
+              </h3>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+                {games.map(([id, def]) => (
+                  <button
+                    key={id}
+                    onClick={() => setGameId(id)}
+                    style={{
+                      padding: '20px 30px', borderRadius: 14, border: '2px solid',
+                      borderColor: id === gameId ? meta.color : '#333',
+                      background: id === gameId ? meta.color + '15' : '#2a2a4a',
+                      color: id === gameId ? meta.color : '#aaa',
+                      cursor: 'pointer', fontSize: 18, fontWeight: 'bold',
+                      minWidth: 160, transition: 'all 0.15s',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {def.name}
+                    <br />
+                    <span style={{ fontSize: 11, fontWeight: 'normal', color: '#777' }}>
+                      {GAME_DESCRIPTIONS[id]}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* 입력 방식 (마우스 전용 게임은 숨김) */}
-      {gameId !== 'hanoi' && (
+      {/* 입력 방식 (알고리즘 게임은 숨김) */}
+      {!isStandaloneGame(gameId) && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <h3 style={{ color: '#666', fontSize: 12, textTransform: 'uppercase', letterSpacing: 2 }}>입력 방식</h3>
           <div style={{ display: 'flex', gap: 12 }}>

@@ -45,6 +45,8 @@ export class RunnerGame extends GameEngine {
     this.timeSinceObstacle = 0;
     this.timeSinceBroadcast = 0;
     this.rng = createRng(12345);
+    // 새 라운드 시작 — micro:bit에 잔여 버퍼 비우라고 알림
+    this.sendSerial?.('0,reset,G,0,0\n');
   }
 
   protected update(dt: number): void {

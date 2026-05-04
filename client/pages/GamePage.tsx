@@ -287,7 +287,7 @@ export function GamePage() {
 
       {/* 시리얼 디버그 패널 (micro:bit 사용 게임만) */}
       {!STANDALONE_GAMES.has(gameId) && manager && (
-        <SerialDebugPanel manager={manager} width={canvasSize.w} />
+        <SerialDebugPanel manager={manager} width={canvasSize.w} gameId={gameId} />
       )}
 
       {!accessGranted && (

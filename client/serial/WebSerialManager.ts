@@ -1,8 +1,11 @@
+export type LogEntry = { direction: 'tx' | 'rx'; text: string; t: number };
+
 type EventMap = {
   command: (cmd: string) => void;
   connect: () => void;
   disconnect: () => void;
   error: (err: Error) => void;
+  log: (entry: LogEntry) => void;
 };
 
 type EventKey = keyof EventMap;
@@ -122,6 +125,7 @@ export class WebSerialManager {
     if (!this.writer) return;
     try {
       this.writer.write(this.encoder.encode(text));
+      this.emit('log', { direction: 'tx', text: text.replace(/\n+$/, ''), t: Date.now() });
     } catch {}
   }
 
@@ -185,6 +189,7 @@ export class WebSerialManager {
       this.buffer = this.buffer.substring(newlineIdx + 1);
       if (line.length > 0) {
         this.emit('command', line);
+        this.emit('log', { direction: 'rx', text: line, t: Date.now() });
       }
     }
     if (this.buffer.length > 256) {

@@ -4,6 +4,7 @@ import { useSerial } from '../hooks/useSerial';
 import { createGame, GAME_REGISTRY } from '../games/GameRegistry';
 import { GameOverModal } from '../components/GameOverModal';
 import { PinKeypad } from '../components/PinKeypad';
+import { SerialDebugPanel } from '../components/SerialDebugPanel';
 import { hasGameAccess, verifyAndGrantGameAccess } from '../api/access';
 import type { GameEngine } from '../engine/GameEngine';
 import type { InputManager } from '../engine/InputManager';
@@ -282,6 +283,11 @@ export function GamePage() {
           <span style={{ fontSize: 13, color: '#ffa04a' }}>⌨️ </span>
           <span style={{ fontSize: 13, color: '#ccc' }}>{KEYBOARD_HINTS[gameId]}</span>
         </div>
+      )}
+
+      {/* 시리얼 디버그 패널 (micro:bit 사용 게임만) */}
+      {!STANDALONE_GAMES.has(gameId) && manager && (
+        <SerialDebugPanel manager={manager} width={canvasSize.w} />
       )}
 
       {!accessGranted && (
